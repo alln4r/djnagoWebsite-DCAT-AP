@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+
+{% block title %} TITLE {% endblock %}
+
+{% block content %}
+<h1>
+    Home page
+</h1> 
+
+<div id="div_id_username" class="form-group col-md-6"> 
+    <label for="id_username" class=" requiredField">
+        Utilizador<span class="asteriskField">*</span> 
+    </label> 
+    <div class=""> 
+        <input type="text" name="username" maxlength="80" autocapitalize="none" autocomplete="username" autofocus="" class="textinput textInput form-control is-invalid" required="" id="id_username">
+        <span class="invalid-feedback id_username">Este campo é obrigatório.</span> 
+        <small id="hint_id_username" class="form-text text-muted">Apenas letras sem acentuação, dígitos e ./-/_</small> 
+    </div> 
+</div>
+
+
+<div id="div_id_email" class="form-group col-md-8"> 
+    <label for="id_email" class=" requiredField">
+    Endereço de email
+    </label> 
+    <div class=""> <input type="email" name="email" maxlength="254" class="emailinput form-control" required="" id="id_email">
+        <span class="invalid-feedback id_email"></span> 
+        <small id="hint_id_email" class="form-text text-muted">Obrigatório. No final, vai receber um email para ativar a conta.</small> 
+    </div> 
+</div>
+
+{% endblock %}

@@ -1,0 +1,116 @@
+{
+  "titleDataset": {
+    "type": "https://schema.org/title",
+    "description": "Property. Model:'https://schema.org/title. Titulo do dataset",
+    "parent": "Dataset"
+  },
+  "descriptionDataset": {
+    "type": "https://schema.org/description",
+    "description": "Property. Model:'http://purl.org/dc/terms/description'. descricao do dataset.",
+    "parent": "Dataset"
+  },
+  "keyword_tagDataset": {
+    "type": "https://schema.org/keywords",
+    "description": "Property. Model:'https://schema.org/keywords'. etiquetatas do dataset.",
+    "parent": "Dataset"
+  },
+  "publisherDataset": {
+    "type": "https://schema.org/publisher",
+    "description": "Property. Model:'https://schema.org/publisher'. editor do dataset.",
+    "parent": "Dataset"
+  },
+  "accessDataset": {
+    "type": "http://purl.org/dc/terms/accessRights",
+    "description": "Property. Model:'http://purl.org/dc/terms/accessRights'. acesso ou restricoes do dataset.",
+    "parent": "Dataset"
+  },
+  "sampleDataset": {
+    "type": "https://www.w3.org/ns/adms#sample",
+    "description": "Property. Model:'https://www.w3.org/ns/adms#sample'. amostra do dataset.",
+    "parent": "Dataset"
+  },
+  "update_modificationDataset": {
+    "type": "https://schema.org/dateModified",
+    "description": "Property. Model:'https://schema.org/dateModified'.",
+    "parent": "Dataset"
+  },
+  "contactPointDataset": {
+    "type": "https://schema.org/contactPoint",
+    "description": "Property. Model:'https://schema.org/contactPoint'. data de modificacao do dataset.",
+    "parent": "Dataset"
+  },
+
+  "titleCatalog": {
+    "type": "https://schema.org/name",
+    "description": "Property. Model:'https://schema.org/name'. Titulo do Catalogo",
+    "parent": "Catalog"
+  },
+  "descriptionCatalog": {
+    "type": "https://schema.org/description",
+    "description": "Property. Model:'https://schema.org/description '. descricao do catalogo.",
+    "parent": "Catalog"
+  },
+  "licenseCatalog": {
+    "type": "https://schema.org/license",
+    "description": "Property. Model:'https://schema.org/license '. licença usada pela organizacao.",
+    "parent": "Catalog"
+  },
+  "languageCatalog": {
+    "type": "https://schema.org/language",
+    "description": "Property. Model:'https://schema.org/language '. ",
+    "parent": "Catalog"
+  },
+  "publisherCatalog": {
+    "type": "https://schema.org/publisher",
+    "description": "Property. Model:'https://schema.org/publisher'.",
+    "parent": "Catalog"
+  },
+  "RightsCatalog": {
+    "type": "http://purl.org/dc/terms/rights",
+    "description": "Property. Model:'http://purl.org/dc/terms/rights'. permissoes do dataset.",
+    "parent": "Catalog"
+  },
+  "update_modificationCatalog": {
+    "type": "https://schema.org/dateModified",
+    "description": "Property. Model:'https://schema.org/dateModified'. data de modificacao do catalogo.",
+    "parent": "Catalog"
+  },
+  "creatorCatalog": {
+    "type": "http://purl.org/dc/terms/creator",
+    "description": "Property. Model:'http://purl.org/dc/terms/creator'. autor do catalogo.",
+    "parent": "Catalog"
+  },
+
+  "modifiedCatalogRcord": {
+    "type": "https://schema.org/dateModified",
+    "description": "Property. Model:'https://schema.org/dateModified '.",
+    "parent": "CatalogRecord"
+  },
+
+  "accessURLDistribution": {
+    "type": "https://schema.org/contentUrl",
+    "description": "Property. Model:'https://schema.org/contentUrl '.",
+    "parent": "Distribution"
+  },
+  "descriptionDistribution": {
+    "type": "https://schema.org/description",
+    "description": "Property. Model:'https://schema.org/description '.",
+    "parent": "Distribution"
+  },
+  "formatDistribution": {
+    "type": "https://schema.org/encodingFormat",
+    "description": "Property. Model:'https://schema.org/encodingFormat '.",
+    "parent": "Distribution"
+  },
+  "licenseDistribution": {
+    "type": "https://schema.org/license",
+    "description": "Property. Model:'https://schema.org/license '",
+    "parent": "Distribution"
+  },
+
+  "partOfDataset": {
+    "type": "https://schema.org/Number",
+    "description": "the number (index in the list) means which dataset this distribution belongs to",
+    "parent": "Distribution"
+  }
+}

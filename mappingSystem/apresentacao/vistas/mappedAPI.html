@@ -1,0 +1,303 @@
+{% extends 'base.html' %}
+
+{% block title %}ADD FIELDS{% endblock %}
+
+{% load static %}
+
+{% block content %}
+<link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/default.min.css">
+<style>
+    /* Estilos para as cores de fundo */
+    .bg-pastel-primary {
+        background-color: #D4A5A5;
+    }
+
+    .bg-pastel-secondary {
+        background-color: #B5D4A5;
+    }
+
+    .bg-pastel-success {
+        background-color: #A5D4BA;
+    }
+
+    .bg-pastel-danger {
+        background-color: #D4A5C9;
+    }
+
+    .bg-pastel-info {
+        background-color: #A5D4D0;
+    }
+
+    .bg-pastel-light {
+        background-color: #D4B6A5;
+    }
+
+    /* Estilos para o código formatado */
+    .formatted-code {
+        white-space: pre-wrap;
+    }
+</style>
+
+<div class="container">
+    <div class="container">
+        <br>
+        {% for response in response_list %}
+        <div class="card field-group mb-4 {% cycle 'bg-pastel-primary' 'bg-pastel-secondary' 'bg-pastel-success' 'bg-pastel-danger' as cycle_color silent %}">
+            <div class="card-header d-flex justify-content-between align-items-center {% if cycle_color == 'bg-pastel-primary' %}bg-pastel-primary{% elif cycle_color == 'bg-pastel-secondary' %}bg-pastel-secondary{% elif cycle_color == 'bg-pastel-success' %}bg-pastel-success{% elif cycle_color == 'bg-pastel-danger' %}bg-pastel-danger{% endif %} text-white">
+                <h5 class="card-title">{{ response.name|escape }}</h5>
+                <button class="btn btn-link toggle-details" type="button" data-toggle="collapse" data-target="#collapse-{{ response.id }}"><i class="fa fa-chevron-up"></i></button>
+            </div>
+            <div class="card-body field-details collapse {% if forloop.first %}show{% endif %} {% if forloop.first %}in{% endif %}" id="collapse-{{ response.id }}">
+                {% for sub_response in response.sub_responses %}
+                <div class="card field-group mb-3 {% cycle 'bg-pastel-info' 'bg-pastel-light' as sub_cycle_color silent %}">
+                    <div class="card-header d-flex justify-content-between align-items-center {% if sub_cycle_color == 'bg-pastel-info' %}bg-pastel-info{% elif sub_cycle_color == 'bg-pastel-light' %}bg-pastel-light{% endif %}">
+                        <h5 class="card-title">{{ sub_response.name|escape }}</h5>
+                        <button class="btn btn-link toggle-details" type="button" data-toggle="collapse" data-target="#sub-collapse-{{ response.id }}-{{ sub_response.id }}"><i class="fa fa-chevron-down"></i></button>
+                    </div>
+                    <div class="card-body collapse {% if forloop.parentloop.first and forloop.first %}show{% endif %}" id="sub-collapse-{{ response.id }}-{{ sub_response.id }}">
+                        <div class="row">
+                            <div class="col-lg-12">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <div class="d-flex align-items-center">
+                                        <label class="form-label me-2">Response content type:</label>
+                                        <select class="form-select form-select-sm" onchange="updateCode('{{ response.id }}', '{{ sub_response.id }}', this.value)">
+                                            <option value="jsonld" selected>JSON-LD</option>
+                                            <option value="ttl">TURTLE</option>
+                                        </select>
+                                    </div>
+                                    <div class="d-flex">
+                                        <!-- Ações -->
+                                        <button type="button" class="btn btn-warning rounded-0 me-1" onclick="editField('{{ response.id }}', '{{ sub_response.id }}')">Edit</button>
+                                        <button type="button" class="btn btn-danger rounded-0 me-1" onclick="deleteField('{{ response.id }}', '{{ sub_response.id }}')">Delete</button>
+                                        <button type="button" class="btn btn-primary rounded-0 me-1" onclick="downloadField('{{ response.id }}', '{{ sub_response.id }}')">Download</button>
+                                        <button type="button" class="btn btn-info rounded-0" onclick="copyField('{{ response.id }}', '{{ sub_response.id }}')">Copy</button>
+                                    </div>
+                                </div>
+                                
+                                <div class="container alert-container"></div>
+                                <pre class="card-text border p-3"><code class="json formatted-code hljs language-json" id="code-{{ response.id }}-{{ sub_response.id }}" data-json="{{ sub_response.jsonld|escape }}" data-turtle="{{ sub_response.ttl|escape }}"></code></pre>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    
+
+
+    
+
+
+<script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlight.min.js"></script>
+<script>
+
+function splitAndKeepDelimiter(text, delimiterRegex) {
+  const matches = text.match(new RegExp(`(.*?)(?:${delimiterRegex.source}|$)`, 'g'));
+  return matches.map(match => match.trim());
+}
+
+function indentTurtle(turtle) {
+  const delimiterRegex = /\s[.;]/g;
+  const lines = splitAndKeepDelimiter(turtle, delimiterRegex)
+ 
+  if (!lines) return '';
+
+  let indentedTurtle = '';
+  let indentationLevel = 0;
+
+  lines.forEach((line) => {
+    const trimmedLine = line.trim();
+    if (trimmedLine !== '') {
+      if (trimmedLine.endsWith('.')) {
+        indentedTurtle += '  '.repeat(indentationLevel) + trimmedLine + '\n';
+        indentationLevel = 0;
+      } else {
+        indentedTurtle += '  '.repeat(indentationLevel) + trimmedLine + '\n';
+        indentationLevel = 1;
+      }
+    }
+  });
+
+  return indentedTurtle;
+}
+
+document.addEventListener("DOMContentLoaded", function () {
+    const jsonCodes = document.querySelectorAll('code.json');
+
+    // Definição da linguagem Turtle para o Highlight.js
+    hljs.registerLanguage('turtle', function (hljs) {
+        return {
+            case_insensitive: true,
+            contains: [
+                {
+                    className: 'keyword',
+                    begin: '@\\w+'
+                },
+                {
+                    className: 'literal',
+                    begin: '[^\\s]+'
+                },
+                {
+                    className: 'string',
+                    begin: /"(?:[^\\"]|\\.)*"/
+                },
+                {
+                    className: 'comment',
+                    begin: '#',
+                    end: '$'
+                }
+            ]
+        };
+    });
+
+    jsonCodes.forEach(function(code) {
+        // Turtle
+        const turtleContent = code.getAttribute('data-turtle');
+        const formattedTurtle = indentTurtle(turtleContent);
+        code.textContent = formattedTurtle;
+        hljs.highlightElement(code);
+
+        // JSON
+        const jsonContent = code.getAttribute('data-json');
+        const formattedJson = JSON.stringify(JSON.parse(jsonContent), null, 2);
+        code.textContent = formattedJson;
+        hljs.highlightElement(code);
+    });
+
+    // Adicionar funcionalidade de colapsar e expandir
+    const toggleButtons = document.querySelectorAll('.toggle-details');
+    toggleButtons.forEach(function (button) {
+        const self = button; // Armazena uma referência ao botão atual
+
+        button.addEventListener('click', function () {
+            const target = self.getAttribute('data-target');
+            const cardBody = document.querySelector(target);
+            cardBody.classList.toggle('show');
+            self.querySelector('i').classList.toggle('fa-chevron-up');
+            self.querySelector('i').classList.toggle('fa-chevron-down');
+        });
+    });
+});
+
+function updateCode(responseId, subResponseId, contentType) {
+    const codeDiv = document.querySelector(`#sub-collapse-${responseId}-${subResponseId} #code-${responseId}-${subResponseId}`);
+    let content = '';
+
+    if (contentType === 'jsonld') {
+        const jsonContent = codeDiv.getAttribute('data-json');
+        content = JSON.stringify(JSON.parse(jsonContent), null, 2);
+        codeDiv.className = 'json formatted-code';
+    } else if (contentType === 'ttl') {
+        const turtleContent = codeDiv.getAttribute('data-turtle');
+        content = indentTurtle(turtleContent);
+        codeDiv.className = 'turtle formatted-code';
+    }
+    
+    codeDiv.textContent = content;
+    hljs.highlightElement(codeDiv);
+}
+
+function editField(responseId, subResponseId) {
+    // Lógica para editar o campo
+    console.log("Edit Field - Response ID:", responseId, "SubResponse ID:", subResponseId);
+}
+
+function deleteField(responseId, subResponseId) {
+    // Lógica para excluir o campo
+    console.log("Delete Field - Response ID:", responseId, "SubResponse ID:", subResponseId);
+}
+
+function downloadField(responseId, subResponseId) {
+    // Lógica para baixar o campo
+    //console.log("Download Field - Response ID:", responseId, "SubResponse ID:", subResponseId);
+
+    const codeDiv = document.querySelector(`#sub-collapse-${responseId}-${subResponseId} #code-${responseId}-${subResponseId}`);
+        const contentType = codeDiv.className.split(' ')[0];
+
+        let content, fileName, fileExtension;
+
+        if (contentType === 'json') {
+            // Se o conteúdo atual for JSON
+            const jsonContent = codeDiv.getAttribute('data-json');
+            content = JSON.stringify(JSON.parse(jsonContent), null, 2);
+            fileName = `response_${responseId}_subresponse_${subResponseId}.json`;
+            fileExtension = 'json';
+        } else if (contentType === 'turtle') {
+            // Se o conteúdo atual for Turtle
+            const turtleContent = codeDiv.getAttribute('data-turtle');
+            content = indentTurtle(turtleContent);
+            fileName = `response_${responseId}_subresponse_${subResponseId}.ttl`;
+            fileExtension = 'ttl';
+        }
+
+        // Cria um elemento de link oculto para baixar o arquivo
+        const downloadLink = document.createElement('a');
+        downloadLink.href = `data:text/plain;charset=utf-8,${encodeURIComponent(content)}`;
+        downloadLink.download = fileName;
+        downloadLink.style.display = 'none';
+
+        // Adiciona o link ao corpo do documento
+        document.body.appendChild(downloadLink);
+
+        // Aciona o clique no link para baixar o arquivo
+        downloadLink.click();
+
+        // Remove o link do corpo do documento após o download
+        document.body.removeChild(downloadLink);
+    
+}
+
+function showAndHideAlert(message, alertType) {
+        const alertDiv = document.createElement('div');
+        alertDiv.classList.add('alert', `alert-${alertType}`, 'alert-dismissible', 'fade', 'show');
+        alertDiv.setAttribute('role', 'alert');
+        alertDiv.textContent = message;
+
+        const closeButton = document.createElement('button');
+        closeButton.classList.add('btn-close');
+        closeButton.setAttribute('type', 'button');
+        closeButton.setAttribute('data-bs-dismiss', 'alert');
+        closeButton.setAttribute('aria-label', 'Close');
+
+        alertDiv.appendChild(closeButton);
+
+        // Adiciona o alerta à página
+        const alertContainer = document.querySelector('.alert-container');
+        alertContainer.appendChild(alertDiv);
+
+        // Fecha o alerta após 5 segundos (5000 milissegundos)
+        setTimeout(() => {
+            alertDiv.classList.remove('show');
+            alertDiv.addEventListener('transitionend', () => {
+                alertDiv.remove();
+            }, { once: true }); // Remove o evento de escuta após a transição de fading ser concluída
+        }, 1200);
+    }
+
+    function copyField(responseId, subResponseId) {
+        const codeDiv = document.querySelector(`#sub-collapse-${responseId}-${subResponseId} #code-${responseId}-${subResponseId}`);
+        const content = codeDiv.textContent;
+
+        // Cria um elemento de textarea oculto para copiar o texto
+        const copyTextArea = document.createElement('textarea');
+        copyTextArea.value = content;
+        copyTextArea.style.position = 'fixed'; // Evita que o textarea afete a exibição da página
+        copyTextArea.style.opacity = 0; // Torna o textarea invisível
+        document.body.appendChild(copyTextArea);
+
+        // Seleciona e copia o texto para a área de transferência
+        copyTextArea.select();
+        document.execCommand('copy');
+
+        // Remove o textarea do corpo do documento após a cópia
+        document.body.removeChild(copyTextArea);
+
+        // Mostra o alerta de sucesso com animação de fading
+        const successAlertMessage = 'Content copied to clipboard!';
+        showAndHideAlert(successAlertMessage, 'success');
+    }
+</script>
+{% endblock %}

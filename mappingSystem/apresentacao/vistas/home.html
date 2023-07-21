@@ -1,0 +1,755 @@
+{% extends 'base.html' %}
+
+{% block title %} HOME {% endblock %}
+{% load static %}
+
+{% block content %}
+<link href="{% static 'css/fieldsLinker.css' %}" rel="stylesheet" />
+<link href="{% static 'css/virtual-select.min.css' %}" rel="stylesheet" />
+
+
+<style>
+  .step-progress {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 30px;
+  }
+
+  .step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin: 0 10px;
+    cursor: pointer; /* Adicionado cursor de ponteiro */
+  }
+
+  .step.active .step-number {
+    background-color: #007bff;
+    color: #fff;
+  }
+
+  .step-number {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: #f1f1f1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    color: #333;
+  }
+
+  .step-title {
+    margin-top: 10px;
+    font-size: 14px;
+    color: #333;
+  }
+
+  .step-content {
+    display: none;
+  }
+
+  .step-content.active {
+    display: block;
+  }
+
+  .button-container {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 30px;
+  }
+
+  .button-container .btn-prev {
+    background-color: #6c757d;
+    color: #fff;
+    padding: 10px 20px;
+  }
+
+  .button-container .btn-next {
+    background-color: #007bff;
+    color: #fff;
+    padding: 10px 20px;
+  }
+
+  .button-container .btn-next.first-step {
+    margin-left: auto;
+  }
+
+  .loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: none;
+    z-index: 9999;
+  }
+
+  .loading-content {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: #fff;
+  }
+
+  .custom-input-group {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.custom-input-group .error-message {
+  flex-basis: 100%;
+  margin-top: 5px;
+}
+
+  
+</style>
+
+  <div class="container mt-5">
+
+    <div class="text-center mt-5">
+      <h1>Data Mapper</h1>
+      <p class="lead">Consiste em transformar os dados de output de uma API em dados conforme o DCAT-AP</p>
+      <p>v0.1.3</p>
+  </div>
+
+  <div class="my-3 p-3 bg-grey border-dark border border-dark  rounded box-shadow">
+
+    <p>Get Data From API URL</p>
+
+    <div class="row justify-content-center">
+      <div class="col-lg-8">
+        <div class="step-progress">
+          <div class="step active" data-step="0">
+            <span class="step-number">1</span>
+            <span class="step-title">Step 1</span>
+          </div>
+          <div class="step" data-step="1">
+            <span class="step-number">2</span>
+            <span class="step-title">Step 2</span>
+          </div>
+          <div class="step" data-step="2">
+            <span class="step-number">3</span>
+            <span class="step-title">Step 3</span>
+          </div>
+      
+        </div>
+
+        <div class="text-center" style="display: none;" id="showDeials">
+          <button class="btn btn-link toggle-details btn-show-step" type="button"><i class="fa fa-chevron-down"></i> Show Details</button>
+        </div>
+
+        <form id="multi-step-form" method="post" >
+          {% csrf_token %}
+          <div class="step-content active">
+            <h3>Step 1</h3>
+            <div class="mb-3">
+              <label class="form-label">Data API URL</label>
+              {{ form.url }}
+              {% for error in form.url.errors %}    
+                <div class="form-text text-danger">{{ error }}</div>
+              {% endfor %}
+            
+            </div>
+            <div class="mb-3">
+              <label for="headers-input" class="form-label">Data API URL Headers:</label>
+              <div id="headers-container">
+                <div class="input-group mb-3 custom-input-group">
+                  <input type="text" class="form-control header-key" placeholder="Enter Header Key" name="keyHeaderData" required>
+                  <input type="text" class="form-control header-value" placeholder="Enter Header Value" name="valueHeaderData" required>
+                  <div class="input-group-append">
+                    <button class="btn btn-outline-danger remove-header" type="button" style="background-color: red;">X</button>
+                  </div>
+                </div>
+              </div>
+              <button class="btn btn-info add-header" type="button" style="background-color: #17a2b8;">Add Header</button>
+              {% for error in form.headers.errors %}    
+              <div class="form-text text-danger">{{ error }}</div>
+            {% endfor %}
+            </div>
+          </div>
+
+          <div class="step-content">
+            <h3>Step 2</h3>
+            <div class="mb-3">
+              <label class="form-label">MetaData API URL</label>
+              {{ form.urlMetaData }}
+              {% for error in form.urlMetaData.errors %}    
+                <div class="form-text text-danger">{{ error }}</div>
+              {% endfor %}
+            </div>
+            <div class="mb-3">
+              <label for="headers-input" class="form-label">MetaData API URL Headers:</label>
+              <div id="headers2-container">
+                <div class="input-group mb-3 custom-input-group">
+                  <input type="text" class="form-control header-key" placeholder="Enter Header Key" name="keyHeaderMeta" required>
+                  <input type="text" class="form-control header-value" placeholder="Enter Header Value" name="valueHeaderMeta" required>
+                  <div class="input-group-append">
+                    <button class="btn btn-danger remove-header2" type="button" style="background-color: red;">X</button>
+                  </div>
+                </div>
+              </div>
+              <button class="btn btn-info add-header2" type="button" style="background-color: #17a2b8;">Add Header</button>
+            </div>
+          </div>
+
+          <div class="step-content">
+            <h3>Step 3</h3>
+            <div class="form-check">
+              <input type="radio" class="form-check-input" id="noneModel" name="flexRadioDefault" value="noneModel">
+              <label class="form-check-label" for="noneModel">None Model</label>
+            </div>
+            <div class="form-check">
+              <input type="radio" class="form-check-input" id="AirQuality2" name="flexRadioDefault" value="AirQuality">
+              <label class="form-check-label" for="AirQuality">Fiware Air Quality Observed Model</label>
+            </div>
+            <div class="form-check">
+              <input type="radio" class="form-check-input" id="device" name="flexRadioDefault" value="device">
+              <label class="form-check-label" for="device">Fiware Device Model</label>
+            </div>
+            <div class="form-check">
+              <input type="radio" class="form-check-input" id="Weather" name="flexRadioDefault" value="Weather">
+              <label class="form-check-label" for="Weather">Fiware Weather Model</label>
+            </div>
+          </div>
+
+          <div class="button-container">
+            <button type="button" class="btn btn-prev">Previous</button>
+            <button type="button" class="btn btn-next first-step">Next</button>
+          </div>
+        </form>
+
+      </div>
+    </div>
+  </div>
+
+  <div id="container" style="display: none;">
+
+    <div id="bonds"></div>
+    <hr/>
+    
+
+    <div class="d-flex flex-row-reverse bd-highlight">
+
+      <button type="button" class="btn btn-sm btn-primary" id="addFieldToSchema">add</button>
+
+      <select id="multiselect" multiple name="native-select" placeholder="add more fields" data-search="false" data-silent-initial-value-set="true">
+      </select>   
+    </div>
+
+    <button type="button" class="btn fieldLinkerSave btn-sm btn-primary">Save links</button>
+    
+     &nbsp;<span id="output"></span>
+     <br /><br />
+     <div id="input">
+     
+     </div>
+ 
+  </div>
+  </div>
+  
+
+
+  <div class="root"></div>
+      
+        
+
+
+
+
+  <div class="loading-overlay">
+    <div class="loading-content">
+      <div class="spinner-border text-danger" role="status" style="width: 7rem; height: 7rem;">
+        <span class="visually-hidden">Loading...</span>
+      </div>
+    </div>
+  </div>
+
+  <script src="{% static 'js/virtual-select.min.js' %}"></script>
+  <script src="{% static 'js/fieldsLinker.js' %}"></script>
+  <script>
+
+    var fieldLinks;
+    var input;
+
+    $('.btn-show-step').click(function() {
+  $('#multi-step-form').slideToggle();
+});
+
+document.addEventListener('DOMContentLoaded', function() {
+
+
+
+  var currentStep = 0;
+  var stepContents = document.getElementsByClassName('step-content');
+  var steps = document.getElementsByClassName('step');
+  var btnPrev = document.getElementsByClassName('btn-prev')[0];
+  var btnNext = document.getElementsByClassName('btn-next')[0];
+  var form = document.getElementById('multi-step-form');
+
+  showStep(currentStep);
+
+  btnNext.addEventListener('click', function() {
+    if (currentStep < steps.length - 1 && checkForm()) {
+      currentStep++;
+      showStep(currentStep);
+    }
+  });
+
+  btnPrev.addEventListener('click', function() {
+    if (currentStep > 0) {
+      currentStep--;
+      showStep(currentStep);
+    }
+  });
+
+  for (var i = 0; i < steps.length; i++) {
+    steps[i].addEventListener('click', function(e) {
+      currentStep = Array.from(steps).indexOf(e.currentTarget);
+      showStep(currentStep);
+    });
+  }
+
+  function showStep(step) {
+    for (var i = 0; i < stepContents.length; i++) {
+      stepContents[i].classList.remove('active');
+      steps[i].classList.remove('active');
+    }
+    stepContents[step].classList.add('active');
+    steps[step].classList.add('active');
+    updateButtons(step);
+  }
+
+  function updateButtons(step) {
+    if (step === 0) {
+      btnPrev.style.display = 'none';
+      btnNext.classList.add('first-step');
+    } else {
+      btnPrev.style.display = 'block';
+      btnNext.classList.remove('first-step');
+    }
+
+    if (step === steps.length - 1) {
+      btnNext.style.display = 'none';
+    } else {
+      btnNext.style.display = 'block';
+    }
+  }
+
+  var form = document.querySelector('form');
+  var loadingOverlay = document.querySelector('.loading-overlay');
+
+  // Função para verificar se o formulário é válido
+  function checkForm() {
+    var inputs = form.getElementsByTagName('input');
+    var isValid = true;
+    var firstStepWithErrors = steps.length - 1;
+
+    // Remover mensagens de erro existentes
+    var errorMessages = form.getElementsByClassName('error-message');
+    while (errorMessages.length > 0) {
+      errorMessages[0].parentNode.removeChild(errorMessages[0]);
+    }
+
+    for (var i = 0; i < inputs.length; i++) {
+      if (!inputs[i].checkValidity()) {
+        isValid = false;
+        inputs[i].reportValidity();
+
+        var stepWithErrors = Array.from(stepContents).indexOf(inputs[i].closest('.step-content'));
+        if (stepWithErrors < firstStepWithErrors) {
+          firstStepWithErrors = stepWithErrors;
+        }
+
+        // Exibir mensagem de erro no campo inválido
+        var errorMessage = document.createElement('div');
+        errorMessage.className = 'error-message form-text text-danger';
+        errorMessage.textContent = inputs[i].validationMessage;
+        inputs[i].parentNode.appendChild(errorMessage);
+
+        // Rolar a página para o campo com erro
+        inputs[i].scrollIntoView({ behavior: 'smooth', block: 'center' });
+        break;
+      }
+    }
+
+    if (firstStepWithErrors !== steps.length - 1) {
+      showStep(firstStepWithErrors);
+    }
+
+    return isValid;
+  }
+
+  // Manipular a mudança de seleção dos inputs radio
+  $('input[type="radio"]').change(function() {
+    
+    if (currentStep === steps.length - 1 && checkForm()) {
+      loadingOverlay.style.display = 'block';
+      $('#multi-step-form').slideToggle();
+
+      form.submit(); // Submeter o formulário
+    }
+  });
+
+
+
+
+
+
+
+
+
+
+
+
+      //---------------------------------Adicionar/remover input vlue/key header-----------------------------------------
+      // Adicionar novo grupo de entrada de cabeçalho
+        function addHeaderInput() {
+        var n = document.querySelectorAll("[name^='keyHeaderData']").length + 1;
+        var name = "keyHeaderData" + n;
+        var namev = "valueHeaderData" + n;
+
+        var newInputGroup = `
+          <div class="input-group mb-3 custom-input-group">
+            <input type="text" class="form-control header-key" placeholder="Enter Header Key" name="${name}" required>
+            <input type="text" class="form-control header-value" placeholder="Enter Header" name="${namev}" required>
+            <div class="input-group-append">
+              <button class="btn btn-outline-danger remove-header" type="button" style="background-color: red;">X</button>
+            </div>
+          </div>
+        `;
+
+        $("#headers-container").append(newInputGroup);
+      }
+
+      function addHeaderInput2() {
+        var n = document.querySelectorAll("[name^='keyHeaderMeta']").length + 1;
+        var name = "keyHeaderMeta" + n;
+        var namev = "valueHeaderMeta" + n;
+
+        var newInputGroup = `
+          <div class="input-group mb-3 custom-input-group">
+            <input type="text" class="form-control header-key" placeholder="Enter Header Key" name="${name}" required>
+            <input type="text" class="form-control header-value" placeholder="Enter Header Value" name="${namev}" required>
+            <div class="input-group-append">
+              <button class="btn btn-outline-danger remove-header2" type="button" style="background-color: red;">X</button>
+            </div>
+          </div>
+        `;
+
+        $("#headers2-container").append(newInputGroup);
+      }
+
+      // Remover o grupo de entrada de cabeçalho clicado
+      function removeHeaderInput() {
+        $(this).closest(".input-group").remove();
+      }
+
+      // Adicionar ouvintes de eventos para botões de adição / remoção
+      $(".add-header").click(addHeaderInput);
+      $(".add-header2").click(addHeaderInput2);
+      $("#headers-container").on("click", ".remove-header", removeHeaderInput);
+      $("#headers2-container").on("click", ".remove-header2", removeHeaderInput);
+
+      //---------------------------------------------FIM-----------------------------------------------------------------
+
+    
+      var formData = "{{ formData | escapejs}}";
+      formData =JSON.parse(formData);
+      console.log(formData)
+      let keys = Object.keys(formData);
+      if (keys.length!=0){
+
+           
+            currentStep=steps.length - 1; //last step
+            showStep(currentStep);
+
+            loadingOverlay.style.display = 'block';
+            $('#multi-step-form').slideToggle();
+
+            document.querySelector('input[type="radio"][value="'+formData["flexRadioDefault"]+'"]').checked = true;
+            document.getElementById( "headers-container").innerHTML = "";
+            document.getElementById( "headers2-container").innerHTML = "";
+
+            //preferi colocar assim varios loopes do que colocar aqui funções de espera onde os dados inicias podem mudar e assim causa erro
+            for (var key in formData["keyHeaderData"]) {             
+                addHeaderInput();
+            }
+            var i=0;
+            for (var key in formData["keyHeaderData"]) { 
+              i=i+1;
+              name="keyHeaderData"+i
+              namev="valueHeaderData"+i       
+              document.querySelector('input[name="'+name+'"]').value=key;
+              document.querySelector('input[name="'+namev+'"]').value=formData["keyHeaderData"][key];
+            }
+
+            for (var key in formData["keyHeaderMeta"]) {             
+                addHeaderInput2();
+            }
+            i=0;
+            for (var key in formData["keyHeaderMeta"]) { 
+              i=i+1;
+              name="keyHeaderMeta"+i
+              namev="valueHeaderMeta"+i       
+              document.querySelector('input[name="'+name+'"]').value=key;
+              document.querySelector('input[name="'+namev+'"]').value=formData["keyHeaderMeta"][key];
+            }
+
+      
+
+
+          let apiModelFields="{{apiModelFields | escapejs}}"
+          
+          apiModelFields =JSON.parse(apiModelFields);
+        
+          if (apiModelFields=="None" || apiModelFields.length==0){
+                  return
+          }
+
+ 
+
+          let existingLinks="{{existingLinks | escapejs}}"
+          existingLinks =JSON.parse(existingLinks);
+          console.log(existingLinks)
+
+          let intermediateModelFields="{{intermediateModelFields | escapejs}}"
+          intermediateModelFields =JSON.parse(intermediateModelFields);
+   
+
+
+
+          //let inputMdl="{{inputMdl | escapejs}}"
+        
+          //inputMdl =JSON.parse(inputMdl);
+          
+          let vkApiData ="{{vkApiData | escapejs}}"
+          vkApiData =JSON.parse(vkApiData);
+
+          //console.log(vkApiData)
+
+          var input = {
+                "localization":{
+                "mandatoryErrorMessage":"This field is mandatory",
+              },
+                "options":{
+                "byName" : true,
+                "lineStyle":"square-ends",
+                "buttonErase":"Erase Links",
+                "autoDetect":"off",
+                "effectHover": "on",
+                "effectHoverBorderWidth" : 2
+              },
+              "listA":
+                {
+                  "name":"Columns in files",
+                  "list" : apiModelFields
+                },
+              "listB":
+                {
+                  "name":"Available Fields",
+                  "list" : intermediateModelFields, //inputMdl ,
+                  "mandatories" :[
+                  //	"nomeR",
+                  //	"titulo"
+                  ]
+                },
+                "existingLinks" : existingLinks //[{"from":"id","to":"nome"}]
+          };
+
+      console.log(input)
+
+          $("#container").show();			
+		  	  fieldLinks=$("#bonds").fieldsLinker("init",input);
+        
+          $(".FL-right ul li").append('<i class="fa fa-pencil" style="right: 8px; color: rgb(170, 170, 170); position: absolute;"> </i>');
+          //style="right: 8px; color: rgb(170, 170, 170); position: absolute; top: 50%; transform: translateY(-50%);">
+          
+          
+          let fieldNames="{{fieldNames | escapejs}}"
+          console.log(fieldNames)
+          fieldNames =JSON.parse(fieldNames);
+          console.log(fieldNames)
+
+          for (let i = 0; i < fieldNames.length; i++) {
+            $('#multiselect').append(`<option value="${fieldNames[i]['id']}">${fieldNames[i]['fieldName']}</option>`);
+          }
+
+          VirtualSelect.init({ 
+              ele: '#multiselect' 
+            });
+              
+
+          
+          $("#showDeials").show();
+          loadingOverlay.style.display = 'none';
+         
+
+          $("#addFieldToSchema").on("click",function(){
+            var results = fieldLinks.fieldsLinker("getLinks");
+
+
+            var id_list_selected=$('#multiselect').val(); 
+            if (id_list_selected.length ==0){
+              return
+            }
+            console.log(id_list_selected)
+        
+            //console.log(results['linksOrder'][0]['from'])
+            
+            if(results['error']==false){
+
+        
+              $.ajax({
+                      type: "GET",
+                      //url: "home",
+                      dataType: "json",
+                      //contentType: 'application/json; charset=utf-8',
+                      data: {
+                        csrfmiddlewaretoken: '{{ csrf_token }}',
+                        id_list_selected: JSON.stringify(id_list_selected),
+                        links: JSON.stringify(results['links'])
+                      },
+                      success: function (data, status) {
+                        console.log( data ) //$.parseJSON(data)
+                        console.log(status)
+                        alert("Data: " + data + "\nStatus: " + status);
+                        input['listA']['list']=data["apiModelFields"]
+                        input['listB']['list']=data["intermediateModelFields"]
+                        input['existingLinks']=data["existingLinks"]
+                        fieldLinks=$("#bonds").fieldsLinker("init",input);
+                      
+                      }
+              });
+
+            }
+            $("#output").html("output => " + JSON.stringify(results));
+            
+          });
+
+
+          $(".fieldLinkerSave").on("click",function(){
+            var results = fieldLinks.fieldsLinker("getLinks");
+        
+            console.log(results['linksOrder'][0]['from'])
+
+            if(results['error']==false){
+
+              for ( let i=0; i<results['links'].length; i++){
+                
+                results['links'][i]['path']=vkApiData[ results['linksOrder'][i]['from'] ];
+            
+              }
+              
+              alert($("input[name='flexRadioDefault']:checked").val())
+              results["flexRadioDefault"] = $("input[name='flexRadioDefault']:checked").val();
+              $.ajax({
+                      type: "POST",
+                      //url: "home",
+                      dataType: "json",
+                      //contentType: 'application/json; charset=utf-8',
+                      data: {
+                        csrfmiddlewaretoken: '{{ csrf_token }}',
+                        'links': JSON.stringify(results)
+                      },
+                      success: function (data, status) {
+                        console.log( data ) //$.parseJSON(data)
+                        console.log(status)
+                        alert("Data: " + data + "\nStatus: " + status);
+                      
+                      }
+              });
+
+            }
+            $("#output").html("output => " + JSON.stringify(results));
+
+          });
+
+ 
+          $(".lineStyle input[type='radio'").on("click",function(){
+            var lineStyle = $("input[name='lineStyle']:checked").val();
+            fieldLinks.fieldsLinker("changeParameters",{"lineStyle":lineStyle});
+            $(".lineStyle label").removeClass("active");
+            $(this).parent().addClass("active");
+          });
+
+          let liClicked=null
+          $(document).on('click','.FL-right ul li i', function(e){
+
+            
+            $("#container").append( '<!-- The Modal -->'+
+            '<div class="modal" id="myModal">'+
+                  '<div class="modal-dialog">'+
+                    '<div class="modal-content">'+
+                    
+                      '<!-- Modal Header -->'+
+                      '<div class="modal-header">'+
+                        '<h5 class="modal-title">header</h5>'+
+                        '<button type="button" class="btn-close" data-bs-dismiss="modal"></button>'+
+                        '</div>'+
+                
+                      '<!-- Modal body -->'+
+                      '<div class="modal-body">'+
+                        
+                        '<form>'+
+                            '<div class="mb-3">'+
+                              '<label for="Value" class="col-form-label">Value:</label>'+
+                                '<input type="text" class="form-control" id="value" />'+
+                                ' </div>'+                
+                            '</form>'+
+
+                          '</div>'+
+                
+                      '<!-- Modal footer -->'+
+                      '<div class="modal-footer">'+
+                        '<button type="button" class="btn btn-danger" data-bs-dismiss="modal">Close</button>'+
+                        '</div>'+
+                
+                    '</div>'+
+                '</div>')
+
+                      
+
+                liClicked=$(this)
+                $('#myModal').modal('toggle');
+     
+      
+            });
+
+            $(document).on('hidden.bs.modal','#myModal', function(e){
+            //$("#myModal").on("hidden.bs.modal", function () {
+              console.log("Aquiii")
+              console.log( $("#value").val() )
+              liClicked.parent().attr( "data-val", $("#value").val() )
+
+              console.log(liClicked.parent().data('val'))
+              if( $("#value").val().length !==0 ){
+                liClicked.css('color', '#5EBA7D');
+                console.log("trueeeeee")
+              }else{ 
+                liClicked.parent().removeData('val');
+                liClicked.parent().removeAttr("data-val");
+                liClicked.css('color', '#aaaaaa');
+                console.log("false")
+                
+              }
+            
+            });
+          
+        }
+      
+      });
+  </script>
+
+
+
+
+
+
+
+
+{% endblock %}

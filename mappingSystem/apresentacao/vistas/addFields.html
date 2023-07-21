@@ -1,0 +1,287 @@
+{% extends 'base.html' %}
+
+{% block title %} ADD FIELDS {% endblock %}
+{% load static %}
+
+{% block content %}
+
+
+<div class="container">
+  <div class="container mb-3">
+    <form method="POST" action="{% url 'addFields' %}">
+      {% csrf_token %}
+      <div id="fields-container">
+        <div class="form-text text-danger">
+          {% for field_errors in form.errors.values %}
+          {% for error in field_errors %}
+          <li>{{ error }}</li>
+          {% endfor %}
+          {% endfor %}
+        </div>
+        <br>
+errors:
+        {% if errors %}
+  <ul>
+    
+        <li>{{ errors }}</li>
+     
+  </ul>
+{% endif %}
+
+        <!-- Field Group Template -->
+        <div class="card field-group template">
+          <div class="card-header d-flex justify-content-between">
+            <h5 class="card-title text-end"></h5>
+            <button class="btn btn-link toggle-details" type="button"><i class="fa fa-chevron-down"></i> Show Details</button>
+          </div>
+          
+          <div class="card-body field-details">
+            <div class="row mb-3">
+              <div class="col-md-6">
+                <label for="id_namespace_0" class="form-label">Namespace:</label>
+                {{ form.namespace_0 }}
+              </div>
+              <div class="col-md-6">
+                <label for="id_term_0" class="form-label">Term:</label>
+                {{ form.term_0 }}
+              </div>
+            </div>
+            <div class="mb-3">
+              <label for="id_fieldName_0" class="form-label">Field Name:</label>
+              {{ form.fieldName_0 }}
+              <span class="error-message invalid-feedback"></span>
+            </div>
+            <div class="mb-3">
+              <label for="id_parent_0" class="form-label">Parent:</label>
+              {{ form.parent_0 }}
+            </div>
+            <button class="btn btn-danger remove-field-btn" type="button">Remove Field Group</button>
+          </div>
+        </div>
+      </div>
+      <br>
+      <button id="add-field-btn" class="btn btn-info mb-3" type="button"><i class="fa fa-plus"></i> Add Field Group</button>
+      <br>
+      <button type="submit" class="btn btn-primary">Submit</button>
+    </form>
+  </div>
+</div>
+
+<script>
+  $(document).ready(function () {
+  var fieldGroupIndex = 0;
+  
+  // Atualizar o grupo de campos do modelo
+  updateFieldGroupTemplate();
+  // Adicionar um grupo de campos inicial
+  addFieldGroup();
+
+  function updateFieldGroupTemplate() {
+  var fieldGroupTemplate = $('.field-group.template');
+
+  // Atualizar atributos "name" e "id" dos campos
+  fieldGroupTemplate.find('select, input').each(function () {
+    var element = $(this);
+    var name = element.attr('name').replace('_0', '__temp0');
+    var id = element.attr('id').replace('_0', '__temp0');
+
+    element.attr('name', name);
+    element.attr('id', id);
+  });
+
+  // Atualizar labels dos campos
+  fieldGroupTemplate.find('label[for^="id_"]').each(function () {
+    var label = $(this);
+    var newFor = label.attr('for').replace('_0', '__temp0');
+
+    label.attr('for', newFor);
+  });
+
+  fieldGroupTemplate.hide();
+}
+
+
+
+  function addFieldGroup() {
+    var fieldGroup = $('.field-group.template').clone();
+    fieldGroup.removeClass('template');
+    fieldGroup.addClass('mb-3');
+    fieldGroup.show();
+ 
+
+    var fieldName = 'Field Group ' + (fieldGroupIndex+1);
+    fieldGroup.find('.card-title').text(fieldName);
+
+    fieldGroup.find('select').each(function () {
+      var select = $(this);
+      var originalId = select.attr('id');
+      var newId = originalId.replace('_temp0', fieldGroupIndex);
+      select.attr("required", true);
+
+      select.attr('id', newId);
+      select.attr('name', select.attr('name').replace('_temp0', fieldGroupIndex));
+    });
+    
+    // Atualizar labels dos campos
+    fieldGroup.find('label[for^="id_"]').each(function () {
+    var label = $(this);
+    var newFor = label.attr('for').replace('_temp0', fieldGroupIndex);
+
+    label.attr('for', newFor);
+  });
+
+    fieldGroup.find('input').each(function () {
+      var input = $(this);
+      var originalId = input.attr('id');
+      var newId = originalId.replace('_temp0', fieldGroupIndex);
+      input.attr("required", true);
+
+      input.attr('id', newId);
+      input.attr('name', input.attr('name').replace('_temp0', fieldGroupIndex));
+    });
+
+    fieldGroup.find('input[name^="fieldName"]').on('input', function () {
+      var fieldValue = $(this).val().toUpperCase();
+      fieldGroup.find('.card-title').text(fieldValue);
+      validateFieldNames();
+    });
+
+    fieldGroup.find('.remove-field-btn').prop('disabled', false);
+
+    $('#fields-container').append(fieldGroup);
+
+    // Ocultar detalhes de todos os outros grupos
+    $('.field-group').not(fieldGroup).find('.field-details').slideUp();
+    // Mostrar detalhes do grupo de campos atual
+    fieldGroup.find('.field-details').slideDown();
+
+    fieldGroupIndex++;
+    updateRemoveFieldButtonVisibility();
+    //validateFieldNames();
+  }
+
+  function removeFieldGroup() {
+    var fieldGroup = $(this).closest('.field-group');
+    fieldGroup.slideUp(function () {
+      fieldGroup.remove();
+      updateRemoveFieldButtonVisibility();
+      validateFieldNames();
+    });
+  }
+
+  function updateRemoveFieldButtonVisibility() {
+    var fieldGroups = $('.field-group:not(.template)');
+    var removeFieldButton = $('.remove-field-btn');
+    removeFieldButton.toggle(fieldGroups.length > 1);
+  }
+
+  function toggleFieldDetails() {
+    var fieldGroup = $(this).closest('.field-group');
+    fieldGroup.find('.field-details').slideToggle();
+  }
+
+  function validateFieldNames() {
+    var fieldNames = [];
+    var isValid = true;
+
+    $('.field-group:not(.template)').each(function () {
+      var fieldGroup = $(this);
+      var fieldNameInput = fieldGroup.find('input[name^="fieldName"]');
+      var fieldName = fieldNameInput.val();
+
+      if (fieldNames.includes(fieldName) && fieldName !== '') {
+        fieldGroup.addClass('form-control is-invalid');
+        fieldNameInput.addClass('is-invalid');
+        fieldGroup.find('.error-message').text('Duplicate field names are not allowed.');
+        isValid = false;
+      } else if (/\s/.test(fieldName)) {
+        fieldGroup.addClass('form-control is-invalid');
+        fieldNameInput.addClass('is-invalid');
+        fieldGroup.find('.error-message').text('Field name cannot contain spaces.');
+        isValid = false;
+      } else if (fieldName.trim() === '') {
+        fieldGroup.addClass('form-control is-invalid');
+        fieldNameInput.addClass('is-invalid');
+        fieldGroup.find('.error-message').text('Field name required.');
+        isValid = false;
+      } else {
+        fieldGroup.removeClass('form-control is-invalid');
+        fieldNameInput.removeClass('is-invalid');
+        fieldGroup.find('.error-message').empty();
+      }
+
+      fieldNames.push(fieldName);
+    });
+
+    if (!isValid) {
+      $('#fields-container').addClass('has-error');
+      $('button[type="submit"]').prop('disabled', true); // Disable the submit button
+    } else {
+      $('#fields-container').removeClass('has-error');
+      $('button[type="submit"]').prop('disabled', false); // Enable the submit button
+    }
+
+    return isValid;
+  }
+
+  
+
+  $('#add-field-btn').click(function () {
+    addFieldGroup();
+  });
+
+  $(document).on('click', '.remove-field-btn', removeFieldGroup);
+  $(document).on('click', '.toggle-details', toggleFieldDetails);
+
+  $(document).on('change', '.namespace-select', function () {
+    var namespaceSelect = $(this);
+    var termSelect = namespaceSelect.closest('.field-group').find('.term-select');
+    var namespace = namespaceSelect.val();
+
+    // Mostrar o loader
+    var loader = $('<div class="loader"><i class="fa fa-spinner fa-spin"></i></div>');
+    termSelect.after(loader);
+
+    $.ajax({
+      url: '/addFields',
+      type: 'GET',
+      data: {
+        'namespace': namespace
+      },
+      dataType: 'json',
+      success: function (data) {
+        termSelect.empty();
+        $.each(data['terms'], function (index, term) {
+          if (typeof term === 'string' && term.trim() !== '') {
+            var option = $('<option></option>').val(term).text(term);
+            termSelect.append(option);
+          }
+        });
+      },
+      complete: function () {
+        loader.remove();
+      }
+    });
+  });
+
+  $('.namespace-select').trigger('change');
+
+  updateRemoveFieldButtonVisibility();
+
+  $('button[type="submit"]').click(function (e) {
+    if (!validateFieldNames()) {
+      e.preventDefault(); // Impede o envio do formulário se houver campos duplicados
+    }
+  });
+
+  $('form').submit(function(e) {
+      // Remover campos do grupo de campo modelo antes de enviar o formulário
+      $('.field-group.template').remove();
+    });
+  
+});
+</script>
+
+
+        
+{% endblock %}

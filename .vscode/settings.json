@@ -1,0 +1,16 @@
+{
+  "editor.formatOnSave": true,
+  "[html]": {
+    "editor.defaultFormatter": "vscode-icons.html"
+  },
+
+  "[javascript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+
+  "[python]": {
+    "editor.formatOnSave": true,
+    "editor.defaultFormatter": "ms-python.autopep8"
+  },
+  "python.formatting.provider": "none"
+}

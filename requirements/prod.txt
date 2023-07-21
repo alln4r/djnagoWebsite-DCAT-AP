@@ -1,0 +1,14 @@
+# python -m venv env
+
+Django==3.0.7
+urllib3
+json2html
+rdflib==6.0.2
+
+#docker build . -t django-app
+# docker run -p 8000:8000 -it --rm django-app
+# depois de intalar executei django-admin startproject mappToDCAT-AP .  para me criar o projeto
+# depois crei uma db vazia para o desenvolvimento  correndo este comando python manage.py migrate
+# para colocar o servido a correr: python manage.py runserver
+# para nao usar o port default 8000 corer o comando assim: python manage.py runserver 5000
+# vai ser necessário criar um user para poder logar na pagina depois: python manage.py createsuperuser
