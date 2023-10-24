@@ -29,17 +29,7 @@ class MapIntermediateModel(MapIntermediateModel_interface):
         if properties is not None:
             intermediateModelFields = list(
                 properties.keys()) + intermediateModelFields
-            print("============================")
-            print("============================")
-            print("============================")
-            print("============================")
-            print(intermediateModelFields)
-            print("============================")
-            print("============================")
-            print("============================")
-            print("============================")
-            print("============================")
-
+   
         return intermediateModelFields
 
     def getMappedLinks(self, intermediateModelFields, schemeMetaDataIntermediate, APImetaData, data):  # mapTo
@@ -49,8 +39,6 @@ class MapIntermediateModel(MapIntermediateModel_interface):
 
         for i in intermediateModelFields:
 
-            # if i in schema:
-            #    element=schema[i]
             if i in schemeMetaDataIntermediate:
                 element = schemeMetaDataIntermediate[i]
                 if isinstance(element, list):  # []
@@ -58,9 +46,6 @@ class MapIntermediateModel(MapIntermediateModel_interface):
 
                 if not element:  # empty
                     continue
-            # else:
-            #    print("nao existe "+i)
-            #    continue
 
             for x in data:
                 if x not in APImetaData:  # empty

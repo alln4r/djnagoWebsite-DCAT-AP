@@ -2,7 +2,7 @@
 from ...apresentacao.validador.addFieldsForm import MyForm
 from ...dominio.modelos.customField import CustomField
 
-from django.shortcuts import render
+from django.shortcuts import redirect, render
 from django.http import JsonResponse
 
 
@@ -32,7 +32,7 @@ def add_field_view(request):
                         fieldName=field_name
                     )
 
-                    # Salva no banco de dados
+                    # guardar na BD
                     custom_field.save()
 
                     metaD[field_name] = {

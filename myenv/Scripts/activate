@@ -37,7 +37,7 @@ deactivate () {
 # unset irrelevant variables
 deactivate nondestructive
 
-VIRTUAL_ENV="C:\Users\arbaouio\Documents\MEIC\TFC\projeto Limpo\mappingSystem\myenv"
+VIRTUAL_ENV="C:\Users\Othmane\Documents\MEIC\TFC\projeto Limpo\mappingSystem\myenv"
 export VIRTUAL_ENV
 
 _OLD_VIRTUAL_PATH="$PATH"

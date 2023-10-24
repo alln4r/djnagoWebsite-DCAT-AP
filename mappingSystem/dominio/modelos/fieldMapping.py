@@ -4,7 +4,7 @@ from .customField import CustomField
 
 
 class FieldMapping(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    name = models.CharField(max_length=400, null=False)
     my_json_object = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -12,11 +12,19 @@ class FieldMapping(models.Model):
     metadata_api_link = models.URLField()
     data_api_header = models.TextField()
     metadata_api_header = models.TextField()
-    custom_fields = models.ManyToManyField(CustomField)
-
-    def __str__(self):
-        return f"FieldMapping: {self.id}"
-
+    custom_fields = models.ManyToManyField(CustomField) 
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    '''
+    def save(self, *args, **kwargs):
+        
+        if not self.name:
+            print()
+            super().save(*args, **kwargs)
+            self.name = f"API_{self.id}"
+          
+        super(FieldMapping, self).save(*args, **kwargs)
+    '''       
+    
     # def as_json(self):
     #    import json
     #    return json.loads(self.my_json_object)

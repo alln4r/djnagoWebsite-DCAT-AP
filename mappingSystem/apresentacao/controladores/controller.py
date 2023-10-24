@@ -1,15 +1,16 @@
 from django.shortcuts import render, redirect
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
 
 from ...apresentacao.validador.apiUrlForm import apiUrlForm
 
 from ...dominio.modelos.fieldMapping import FieldMapping
 from ...dominio.modelos.customField import CustomField
+from ...dominio.modelos.mappedApi import MappedApi
 
 from ...dominio.servicos.tratarJson_Impl import TratarJson
 from ...dominio.servicos.mapIntermediateModel_Impl import MapIntermediateModel
-from ...dominio.servicos.MapJsonToDCATFiles import MapJsonToDCATFiles
-from ...dominio.servicos.ToDCAT_AP import ToDCAT_AP
+#from ...dominio.servicos.MapJsonToDCATFiles import MapJsonToDCATFiles
+from ...dominio.servicos.toDCAT_AP import ToDCAT_AP
 import json
 import os
 
@@ -34,7 +35,8 @@ def home(request):
                 apiData = apiResponse["responseAPI"]
                 apiMetaData = apiResponse["response_metaData"]
                 schemeFiwareModel = apiResponse["response_fiwareModel"]
-                formData= apiResponse["formData"]
+                formData = apiResponse["formData"]
+
              
                 with open(os.path.join(os.path.dirname(__file__), 'doc', 'metaDataIntermediate.json'), "r") as f:
                     # Load the JSON data from the file
@@ -54,6 +56,9 @@ def home(request):
                 request.session['apiMetaData'] = apiMetaData
                 request.session['schemeMetaDataIntermediate'] = schemeMetaDataIntermediate
 
+                request.session['urlMetaData'] = apiResponse["urlMetaData"]
+                request.session['url'] = apiResponse["url"]
+                request.session['formData'] = apiResponse["formData"]
                 #
              
                 #return render(request,'home.html', {'data':data})
@@ -63,7 +68,7 @@ def home(request):
                 existingLinks=json.dumps(existingLinks)
 
               
-                # Filtra as instâncias de CustomField relacionadas ao usuário logado
+                # Filtra as instâncias de CustomField relacionadas ao user logado
                 customFields = CustomField.objects.filter(user=request.user)
 
                 # Seleciona apenas a coluna 'fieldName'
@@ -103,10 +108,59 @@ def home(request):
                 dcatTTL, dcatJsonLD = ToDCAT_AP().run(intermediateModelData)
 
                 print(dcatJsonLD)'''
-            intermediateModelData = MapIntermediateModel().getIntermediateModelData(mdlData[0], request.session.get('schemeMetaDataIntermediate'))
+            intermediateModelData = MapIntermediateModel().getIntermediateModelData(modelData[0], request.session.get('schemeMetaDataIntermediate'))
             dcatTTL, dcatJsonLD = ToDCAT_AP().run(intermediateModelData)
 
-            #dar save dcatTTL, dcatJsonLD, request.POST.get('links' ) 
+            #dar save dcatTTL, dcatJsonLD, request.POST.get('links' )
+           
+            print("_______________________")
+           
+            formData=json.loads(request.session.get('formData'))          
+            # Cria uma instância de FieldMapping
+            field_mapping = FieldMapping.objects.create(
+                user=request.user,
+                my_json_object = request.POST.get('links' ),
+                #created_at = models.DateTimeField(auto_now_add=True)
+                #updated_at = models.DateTimeField(auto_now=True)
+                data_api_link = request.session.get('url'),
+                metadata_api_link = request.session.get('urlMetaData'),
+                
+                data_api_header = formData['keyHeaderData'],
+                metadata_api_header = formData['keyHeaderMeta'],
+                #custom_fields = request.session.get('id_list_CustomFields')
+                #request.session.get('formData')['flexRadioDefault']
+                #mappedApiID = mapped_api #referencia com id
+            )
+
+            #id_list_CustomFields =  request.session.get('id_list_CustomFields')
+            
+            print(intermediateModelFields)
+            print("____________-----------------_______________")
+            print(request.session.get('FieldsName'))
+           
+            if(request.session.get('FieldsName') is not None):
+                found_values = [item for item in request.session.get('FieldsName') if item in intermediateModelFields]
+                if found_values:
+                    custom_fields = CustomField.objects.filter(fieldName__in=found_values)
+                    field_mapping.custom_fields.set(custom_fields)
+
+            # guardar na BD
+            field_mapping.save()
+            if not field_mapping.name:
+                field_mapping.name = f"API_{field_mapping.id}"
+     
+
+            # guardar o objeto novamente para persistir as alterações
+            field_mapping.save()
+
+            mapped_api = MappedApi(
+                #name = o name está a ser definido no modelo, é para ir a null
+                dcat_ttl = dcatTTL,
+                dcat_jsonld = dcatJsonLD,
+                fieldMappingID = field_mapping
+            )
+
+            mapped_api.save()
 
             return HttpResponse(  json.dumps( {'resp': "dentro ajaxxxxxxx", "apiData": apiData, "vkApiData": vlk, "inputMDL": intermediateModelFields } ) )
 
@@ -116,17 +170,19 @@ def home(request):
             #intermediateModelFields  é os campos, só os nomes dos campos
             #schemeMetaDataIntermediate o scheme dos campos
 
-            #ao intermediateModelFields concatnar os campos novos q vao ser rececionados
+            #o intermediateModelFields concatnar os campos novos q vao ser rececionados
             #o schemeMetaDataIntermediate para os campos novos tem q ser consultado nas base de dados
             # depois e´correr o existingLinks e contactar com o existing links antigos
 
-        
             id_list_selected = json.loads( request.GET.get('id_list_selected') )
+            #request.session['id_list_CustomFields'] = id_list_selected
             apiModelFields = request.session.get('apiModelFields')
             apiMetaData= request.session.get('apiMetaData') 
             intermediateModelFields = request.session.get('intermediateModelFields')
+           
             selectedFields = CustomField.objects.filter(user=request.user, id__in=id_list_selected)
 
+            request.session['FieldsName'] = list( selectedFields.values_list('fieldName', flat=True))
             schemaMetaCustomFields = {}
             intemediateCustomFields=[]
 

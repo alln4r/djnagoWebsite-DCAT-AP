@@ -41,51 +41,95 @@
 <div class="container">
     <div class="container">
         <br>
-        {% for response in response_list %}
-        <div class="card field-group mb-4 {% cycle 'bg-pastel-primary' 'bg-pastel-secondary' 'bg-pastel-success' 'bg-pastel-danger' as cycle_color silent %}">
-            <div class="card-header d-flex justify-content-between align-items-center {% if cycle_color == 'bg-pastel-primary' %}bg-pastel-primary{% elif cycle_color == 'bg-pastel-secondary' %}bg-pastel-secondary{% elif cycle_color == 'bg-pastel-success' %}bg-pastel-success{% elif cycle_color == 'bg-pastel-danger' %}bg-pastel-danger{% endif %} text-white">
-                <h5 class="card-title">{{ response.name|escape }}</h5>
-                <button class="btn btn-link toggle-details" type="button" data-toggle="collapse" data-target="#collapse-{{ response.id }}"><i class="fa fa-chevron-up"></i></button>
-            </div>
-            <div class="card-body field-details collapse {% if forloop.first %}show{% endif %} {% if forloop.first %}in{% endif %}" id="collapse-{{ response.id }}">
-                {% for sub_response in response.sub_responses %}
-                <div class="card field-group mb-3 {% cycle 'bg-pastel-info' 'bg-pastel-light' as sub_cycle_color silent %}">
-                    <div class="card-header d-flex justify-content-between align-items-center {% if sub_cycle_color == 'bg-pastel-info' %}bg-pastel-info{% elif sub_cycle_color == 'bg-pastel-light' %}bg-pastel-light{% endif %}">
-                        <h5 class="card-title">{{ sub_response.name|escape }}</h5>
-                        <button class="btn btn-link toggle-details" type="button" data-toggle="collapse" data-target="#sub-collapse-{{ response.id }}-{{ sub_response.id }}"><i class="fa fa-chevron-down"></i></button>
-                    </div>
-                    <div class="card-body collapse {% if forloop.parentloop.first and forloop.first %}show{% endif %}" id="sub-collapse-{{ response.id }}-{{ sub_response.id }}">
-                        <div class="row">
-                            <div class="col-lg-12">
-                                <div class="d-flex justify-content-between align-items-center mb-2">
-                                    <div class="d-flex align-items-center">
-                                        <label class="form-label me-2">Response content type:</label>
-                                        <select class="form-select form-select-sm" onchange="updateCode('{{ response.id }}', '{{ sub_response.id }}', this.value)">
-                                            <option value="jsonld" selected>JSON-LD</option>
-                                            <option value="ttl">TURTLE</option>
-                                        </select>
+        <div class="field-group mb-4 messageHideSHow"></div>
+        {% if response_list %}
+            {% for response in response_list %}
+            <div class="card field-group mb-4 {% cycle 'bg-pastel-primary' 'bg-pastel-secondary' 'bg-pastel-success' 'bg-pastel-danger' as cycle_color silent %}">
+                <div class="card-header d-flex justify-content-between align-items-center {% if cycle_color == 'bg-pastel-primary' %}bg-pastel-primary{% elif cycle_color == 'bg-pastel-secondary' %}bg-pastel-secondary{% elif cycle_color == 'bg-pastel-success' %}bg-pastel-success{% elif cycle_color == 'bg-pastel-danger' %}bg-pastel-danger{% endif %} text-white">
+                    <h5 class="card-title">{{ response.name|escape }}</h5>
+                    <button class="btn btn-link toggle-details" type="button" data-toggle="collapse" data-target="#collapse-{{ response.id }}"><i class="fa fa-chevron-up"></i></button>
+                </div>
+                <div class="card-body field-details collapse {% if forloop.first %}show{% endif %} {% if forloop.first %}in{% endif %}" id="collapse-{{ response.id }}">
+                    {% for sub_response in response.sub_responses %}
+                    <div class="card field-group mb-3 {% cycle 'bg-pastel-info' 'bg-pastel-light' as sub_cycle_color silent %}">
+                        <div class="card-header d-flex justify-content-between align-items-center {% if sub_cycle_color == 'bg-pastel-info' %}bg-pastel-info{% elif sub_cycle_color == 'bg-pastel-light' %}bg-pastel-light{% endif %}">
+                            <h5 class="card-title">{{ sub_response.name|escape }}</h5>
+                            <button class="btn btn-link toggle-details" type="button" data-toggle="collapse" data-target="#sub-collapse-{{ response.id }}-{{ sub_response.id }}"><i class="fa fa-chevron-down"></i></button>
+                        </div>
+                        <div class="card-body collapse {% if forloop.parentloop.first and forloop.first %}show{% endif %}" id="sub-collapse-{{ response.id }}-{{ sub_response.id }}">
+                            <div class="row">
+                                <div class="col-lg-12">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <div class="d-flex align-items-center">
+                                            <label class="form-label me-2">Response content type:</label>
+                                            <select class="form-select form-select-sm" onchange="updateCode('{{ response.id }}', '{{ sub_response.id }}', this.value)">
+                                                <option value="jsonld" selected>JSON-LD</option>
+                                                <option value="ttl">TURTLE</option>
+                                            </select>
+                                        </div>
+                                        <div class="d-flex">
+                                            <!-- Ações -->
+                                            <button type="button" class="btn btn-warning rounded-0 me-1" onclick="editField('{{ response.id }}', '{{ sub_response.id }}')">Edit</button>
+                                            <button type="button" class="btn btn-danger rounded-0 me-1" onclick="deleteField('{{ response.id }}', '{{ sub_response.id }}')">Delete</button>
+                                            <button type="button" class="btn btn-primary rounded-0 me-1" onclick="downloadField('{{ response.id }}', '{{ sub_response.id }}')">Download</button>
+                                            <button type="button" class="btn btn-info rounded-0 me-1" onclick="copyField('{{ response.id }}', '{{ sub_response.id }}')">Copy</button>
+                                            <button type="button" class="btn btn-success rounded-0" onclick="addToCKAN('{{ response.id }}', '{{ sub_response.id }}')">Add to CKAN</button>
+                                          
+
+                                        </div>
                                     </div>
-                                    <div class="d-flex">
-                                        <!-- Ações -->
-                                        <button type="button" class="btn btn-warning rounded-0 me-1" onclick="editField('{{ response.id }}', '{{ sub_response.id }}')">Edit</button>
-                                        <button type="button" class="btn btn-danger rounded-0 me-1" onclick="deleteField('{{ response.id }}', '{{ sub_response.id }}')">Delete</button>
-                                        <button type="button" class="btn btn-primary rounded-0 me-1" onclick="downloadField('{{ response.id }}', '{{ sub_response.id }}')">Download</button>
-                                        <button type="button" class="btn btn-info rounded-0" onclick="copyField('{{ response.id }}', '{{ sub_response.id }}')">Copy</button>
-                                    </div>
+                                    
+                                    <div class="container alert-container"></div>
+                                    <pre class="card-text border p-3"><code class="json formatted-code hljs language-json" id="code-{{ response.id }}-{{ sub_response.id }}" data-json="{{ sub_response.jsonld|escape }}" data-turtle="{{ sub_response.ttl|escape }}"></code></pre>
                                 </div>
-                                
-                                <div class="container alert-container"></div>
-                                <pre class="card-text border p-3"><code class="json formatted-code hljs language-json" id="code-{{ response.id }}-{{ sub_response.id }}" data-json="{{ sub_response.jsonld|escape }}" data-turtle="{{ sub_response.ttl|escape }}"></code></pre>
                             </div>
                         </div>
                     </div>
+                    {% endfor %}
                 </div>
-                {% endfor %}
             </div>
-        </div>
-        {% endfor %}
+            {% endfor %}
+        {% else %}
+            <!-- Se a response_list estiver vazia, exiba a mensagem de alerta -->
+            <div class="alert alert-warning">
+                No mappings have been created yet.
+            </div>
+        {% endif %}
     </div>
     
+
+    
+<!-- Modal para adicionar token e URL do CKAN -->
+<div class="modal fade" id="ckanModal" tabindex="-1" role="dialog" aria-labelledby="ckanModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="ckanModalLabel">Add to CKAN</h5>
+                
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                
+            </div>
+            <div class="modal-body">
+                <!-- Formulário para inserir token e URL do CKAN -->
+                <form id="ckanForm">                    
+                    <div class="mb-3">
+                        <label for="ckanURL" class="form-label">CKAN URL</label>
+                        <input type="text" class="form-control" id="ckanURL" placeholder="Enter your CKAN URL">
+                    </div>
+                    <div class="mb-3">
+                        <label for="ckanToken" class="form-label">CKAN Token</label>
+                        <input type="text" class="form-control" id="ckanToken" placeholder="Enter your CKAN token">
+                    </div>
+                    <input type="hidden" class="form-control" id="modalSubResponseID">
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" onclick="submitToCKAN()">Add</button>
+            </div>
+        </div>
+    </div>
+</div>
 
 
     
@@ -93,6 +137,66 @@
 
 <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlight.min.js"></script>
 <script>
+
+
+function addToCKAN(responseId, subResponseId) {
+    $('#modalResponseID').val(responseId)
+    $('#modalSubResponseID').val(subResponseId)
+
+    $('#ckanModal').modal('show');
+}
+
+function submitToCKAN() {
+    // Pega os valores do formulário
+    const ckanToken = document.querySelector('#ckanToken').value;
+    const ckanURL = document.querySelector('#ckanURL').value;
+    const subResponseId = document.querySelector('#modalSubResponseID').value;
+
+    // Crie um objeto de dados com os valores do formulário
+    const formData = {
+        csrfmiddlewaretoken: '{{ csrf_token }}',
+        ckanToken: ckanToken,
+        ckanURL: ckanURL,
+        subResponseId: subResponseId,
+        type:"TO_CKAN"
+    };
+
+    // Realize uma solicitação AJAX para enviar os dados ao servidor
+    $.ajax({
+        url: 'mappedAPI',
+        type: 'POST',
+        dataType: "json",
+        data: formData,
+        success: function (data, status) {
+            // Lógica para tratamento de sucesso
+            console.log('Sucesso:', data);
+            // Feche o modal
+            $('#ckanModal').modal('hide');
+            // Exibir uma mensagem de sucesso para o user
+            showAndHideAlert(data.message, 'success','.alert-container');
+
+            
+        },
+        error: function (error) {
+            if (error && error.responseJSON && error.responseJSON.message) {
+                // Se a resposta de erro contém a propriedade "message"
+                console.error('Erro:', error.responseJSON.message);
+                console.log(error.responseJSON.message)
+                // Exibir uma mensagem de erro para o usuário
+                showAndHideAlert(error.responseJSON.message, 'danger','.modal-body');
+            } else {
+                // Se não houver uma mensagem de erro específica na resposta
+                console.error('Unknown error.');
+                // Exibir uma mensagem de erro para o usuário
+                showAndHideAlert('Error: An error occurred while submitting your data.', 'danger','.modal-body');
+            }
+        }
+    });
+}
+
+
+
+
 
 function splitAndKeepDelimiter(text, delimiterRegex) {
   const matches = text.match(new RegExp(`(.*?)(?:${delimiterRegex.source}|$)`, 'g'));
@@ -201,13 +305,85 @@ function updateCode(responseId, subResponseId, contentType) {
 }
 
 function editField(responseId, subResponseId) {
-    // Lógica para editar o campo
-    console.log("Edit Field - Response ID:", responseId, "SubResponse ID:", subResponseId);
+    
+    // Crie um objeto de dados com os valores do formulário
+    const formData = {
+        csrfmiddlewaretoken: '{{ csrf_token }}',
+        responseId: responseId,
+        subResponseId: subResponseId,
+        type:"TO_EDIT_MAP"
+    };
+
+    // Realize uma solicitação AJAX para enviar os dados ao servidor
+    $.ajax({
+        url: 'mappedAPI',
+        type: 'POST',
+        dataType: "json",
+        data: formData,
+        success: function (data, status) {
+            // Lógica para tratamento de sucesso
+            console.log('Sucesso:', data);
+
+            // Exibir uma mensagem de sucesso para o usuário
+            showAndHideAlert('Sucesso: Seus dados foram enviados com sucesso!', 'success','.alert-container');
+
+        },
+        error: function (error) {
+            // Lógica para tratamento de erro
+            console.error('Erro:', error);
+
+            // Exibir uma mensagem de erro para o usuário
+            showAndHideAlert('Erro: Ocorreu um erro ao enviar seus dados.', 'danger','.alert-container');
+        }
+    });
+
 }
 
 function deleteField(responseId, subResponseId) {
-    // Lógica para excluir o campo
-    console.log("Delete Field - Response ID:", responseId, "SubResponse ID:", subResponseId);
+    
+    // Crie um objeto de dados com os valores do formulário
+    const formData = {
+        csrfmiddlewaretoken: '{{ csrf_token }}',
+        responseId: responseId,
+        subResponseId: subResponseId,
+        type:"TO_DELETE_MAP"
+    };
+
+    let id_remove = `sub-collapse-${responseId}-${subResponseId}`;
+    
+    // Realize uma solicitação AJAX para enviar os dados ao servidor
+    $.ajax({
+        url: 'mappedAPI',
+        type: 'POST',
+        dataType: "json",
+        data: formData,
+        success: function (data, status) {
+            // Lógica para tratamento de sucesso
+            console.log('Sucesso:', data);
+            // Feche o modal
+            document.getElementById(id_remove).parentElement.remove();
+            // Exibir uma mensagem de sucesso para o user
+            showAndHideAlert(data.message, 'success','.messageHideSHow');
+
+        },
+        error: function (error) {
+            if (error && error.responseJSON && error.responseJSON.message) {
+                // Se a resposta de erro contém a propriedade "message"
+                console.error('Erro:', error.responseJSON.message);
+                console.log(error.responseJSON.message)                
+                
+                // Exibir uma mensagem de erro para o usuário
+                showAndHideAlert(error.responseJSON.message, 'danger','.modal-body');
+            } else {
+                // Se não houver uma mensagem de erro específica na resposta
+                console.error('Unknown error.');
+                // Exibir uma mensagem de erro para o usuário
+                showAndHideAlert('Error: An error occurred while submitting your data.', 'danger','.modal-body');
+            }
+
+            
+        }
+    });
 }
 
 function downloadField(responseId, subResponseId) {
@@ -250,7 +426,7 @@ function downloadField(responseId, subResponseId) {
     
 }
 
-function showAndHideAlert(message, alertType) {
+function showAndHideAlert(message, alertType, alertContainer) {
         const alertDiv = document.createElement('div');
         alertDiv.classList.add('alert', `alert-${alertType}`, 'alert-dismissible', 'fade', 'show');
         alertDiv.setAttribute('role', 'alert');
@@ -265,17 +441,20 @@ function showAndHideAlert(message, alertType) {
         alertDiv.appendChild(closeButton);
 
         // Adiciona o alerta à página
-        const alertContainer = document.querySelector('.alert-container');
-        alertContainer.appendChild(alertDiv);
-
+        alertContainer = document.querySelector(alertContainer) //'.alert-container');
+        //alertContainer.appendChild(alertDiv);
+        alertContainer.insertBefore(alertDiv, alertContainer.firstChild);
+        alertContainer.scrollIntoView({ behavior: 'smooth' });
         // Fecha o alerta após 5 segundos (5000 milissegundos)
         setTimeout(() => {
             alertDiv.classList.remove('show');
             alertDiv.addEventListener('transitionend', () => {
                 alertDiv.remove();
             }, { once: true }); // Remove o evento de escuta após a transição de fading ser concluída
-        }, 1200);
+        }, 4000);
     }
+
+
 
     function copyField(responseId, subResponseId) {
         const codeDiv = document.querySelector(`#sub-collapse-${responseId}-${subResponseId} #code-${responseId}-${subResponseId}`);
@@ -297,7 +476,10 @@ function showAndHideAlert(message, alertType) {
 
         // Mostra o alerta de sucesso com animação de fading
         const successAlertMessage = 'Content copied to clipboard!';
-        showAndHideAlert(successAlertMessage, 'success');
+        showAndHideAlert(successAlertMessage, 'success','.alert-container');
     }
+
+
+
 </script>
 {% endblock %}

@@ -1,255 +1,101 @@
 
-from ...apresentacao.validador.addFieldsForm import MyForm
-from ...dominio.modelos.customField import CustomField
-
-from django.shortcuts import render
-from django.http import JsonResponse
 import json
+from ...dominio.modelos.fieldMapping import FieldMapping
+from ...dominio.servicos.toCKAN import CKANImporter
+from ...dominio.modelos.mappedApi import MappedApi
+
+from django.shortcuts import redirect, render
+from django.http import JsonResponse
+from django.db import transaction
+
 
 
 def mappedAPI_view(request):
     if not request.user.is_authenticated:
         return redirect('login')
     else:
-        if request.method == 'POST':
-            form = MyForm(request.POST)
+        
+        if request.method == 'POST' and request.is_ajax():
+            type = request.POST.get('type')
+            if type=="TO_CKAN":
+                # Obtenha os dados do formulário
+                ckan_token = request.POST.get('ckanToken')
+                ckan_url = request.POST.get('ckanURL')
 
-            metaD = {}
-            for key, value in request.POST.items():
-                if key.startswith('namespace_'):
-                    namespace = value
-                    term = request.POST.get(f'term_{key.split("_")[1]}')
-                    field_name = request.POST.get(
-                        f'fieldName_{key.split("_")[1]}')
-                    parent = request.POST.get(
-                        f'parent_{key.split("_")[1]}')
+                
+            
+                dcat_jsonld = MappedApi.objects.get(id=request.POST.get('subResponseId')).dcat_jsonld
 
-                    # Cria uma instância de CustomField
-                    custom_field = CustomField(
-                        user=request.user,
-                        namespace=namespace,
-                        term=term,
-                        parent=parent,
-                        fieldName=field_name
-                    )
+                try:
+                    ckan_importer = CKANImporter(ckan_url, ckan_token, json.loads(dcat_jsonld))
+                    # Continue o processamento normal se a inicialização ocorrer sem erros
+                except ValueError as e:
+                    # Se ocorrer um erro, capture a exceção ValueError e retorne uma resposta de erro
+                    error_message = str(e)
+                    response_data = {'message': error_message}
+                    return JsonResponse(response_data, status=400)
 
-                    # Salva no banco de dados
-                    custom_field.save()
+                #ckan_importer = CKANImporter(ckan_url, ckan_token, json.loads(dcat_jsonld) )
 
-                    metaD[field_name] = {
-                        "type": namespace,
-                        "term": term,
-                        "parent": parent
-                    }
+                return ckan_importer.import_to_ckan()
+                
+            
+            if type=="TO_DELETE_MAP":
+                
+                try:
+                    with transaction.atomic():
+                        # Get the MappedApi record to delete
+                        mapped_api = MappedApi.objects.get(id= request.POST.get('subResponseId'))
+                        
+                        # Check if the field_id is unique in MappedApi
+                        field_id_count = MappedApi.objects.filter(fieldMappingID=mapped_api.fieldMappingID).count()
+                        
+                        if field_id_count == 1:
+                            # If the field_id is unique, delete the corresponding OtherTable record
+                            FieldMapping.objects.get(id=mapped_api.fieldMappingID).delete()
+                        else:
+                            # Delete the MappedApi record
+                            mapped_api.delete()
+                        
+                        return JsonResponse({'message': "Record deleted successfully."})
 
-            return JsonResponse({'metaD': metaD})
+                except MappedApi.DoesNotExist:
+                    return JsonResponse({'message': "Record not found. It couldn't be deleted."}, status=400)
+                except FieldMapping.DoesNotExist:
+                    return JsonResponse({'message': "Record not found."}, status=400)
+                except Exception as e:
+                    return JsonResponse({'message': f"An error occurred: {str(e)}"}, status=500)
 
-        elif request.method == 'GET' and request.is_ajax():
-            namespace = request.GET.get('namespace')
-            terms = MyForm().get_terms(namespace)
-            term_list = [term for term in terms]
-            return JsonResponse({'terms': term_list})
+            
+                    
+            if type=="TO_EDIT_MAP":
+                return JsonResponse({'type': type}) 
+        else:           
+            response_list = []
+            # Recupere todas as linhas do modelo A
+            field_mapping = FieldMapping.objects.filter(user=request.user)
+            
 
-        else:
-            print("estou aqui")
-
-            # Converter o dicionário de namespaces em uma lista de tuplas (value, label)
-
-            response_list = [
-                {"name": "kaka",
-                 "id": 1,
-                 "sub_responses": [
-                         {
-                             "id": 0,
-                             "name": "kaka111",
-                             "jsonld": json.dumps({"oi": "oioioi", "number": 123, "lista": ["as", "asd", "sds"]}),
-                             "ttl": '@prefix dcat: <http://www.w3.org/ns/dcat#> .'
-
-                                    + '<http://example.org/catalog> a dcat:Catalog ;'
-                                     + '   dcat:creator "Othmane El Arbaoui" ;'
-                                      + '  dcat:dataset <http://example.org/dataset/> ;'
-                                      + '  dcat:dateModified "Novembro 12, 2022, 15:28 (Europe/Lisbon)" ;'
-                                      + '  dcat:description "descrição catalogo" ;'
-                                      + '  dcat:language "https://publications.europa.eu/resource/authority/language/POR" ;'
-                                      + '  dcat:license "CC BY-SA" ;'
-                                      + '  dcat:name "titulo Catalogo" ;'
-                                      + '  dcat:publisher "http://lisboaaberta.cm-lisboa.pt" ;'
-                                      + '  dcat:title "" .'
-                         },
-
-                     {
-                             "id": 1,
-                             "name": "kaka111",
-                             "jsonld": json.dumps({"oi": "oioioi", "number": 123, "lista": ["as", "asd", "sds"]}),
-                             "ttl": "ttl"
-                             },
-                     {"id": 2,
-                             "name": "kaka111",
-                             "jsonld": json.dumps({"oi": "oioioi", "number": 123, "lista": ["as", "asd", "sds"]}),
-                             "ttl": "ttl"
-                      },
-
-                     {
-                             "id": 3,
-                             "name": "kaka111",
-                             "jsonld": json.dumps({"oi": "oioioi", "number": 123, "lista": ["as", "asd", "sds"]}),
-                             "ttl": 'ttl'
-                     },
-
-                     {
-                             "id": 4,
-                             "name": "kaka111",
-                             "jsonld": json.dumps({"oi": "oioioi", "number": 123, "lista": ["as", "asd", "sds"]}),
-                             "ttl": "ttl"
-                     }
-                 ]
-                 },
-                {"name": "kaka2",
-                 "id": 2,
-                 "sub_responses": [
-                     {
-                         "id": 0,
-                         "name": "kaka111",
-                         "jsonld": json.dumps({"oi": "oioioi", "number": 123, "lista": ["as", "asd", "sds"]}),
-                         "ttl": "ttl"
-                     }
-                 ]
-                 },
-
-                {"name": "kaka3",
-                 "id": 3,
-                 "sub_responses": [
-                     {
-                         "id": 0,
-                         "name": "kaka111",
-                         "jsonld": json.dumps({"oi": "oioioi", "number": 123, "lista": ["as", "asd", "sds"]}),
-                         "ttl": "ttl"
-                     }
-                 ]
-                 },
-
-                {"name": "kaka2",
-                 "id": 4,
-                 "sub_responses": [
-                     {
-                         "id": 0,
-                         "name": "kaka111",
-                         "jsonld": json.dumps({"oi": "oioioi", "number": 123, "lista": ["as", "asd", "sds"]}),
-                         "ttl": "ttl"
-                     }
-                 ]
-                 },
-
-                {"name": "kaka3",
-                 "id": 5,
-                 "sub_responses": [
-                     {
-                         "id": 0,
-                         "name": "kaka111",
-                         "jsonld": json.dumps({"oi": "oioioi", "number": 123, "lista": ["as", "asd", "sds"]}),
-                         "ttl": "ttl"
-                     }
-                 ]
-                 },
-
-                {"name": "kaka2",
-                 "id": 6,
-                 "sub_responses": [
-                     {
-                         "id": 0,
-                         "name": "kaka111",
-                         "jsonld": json.dumps({"oi": "oioioi", "number": 123, "lista": ["as", "asd", "sds"]}),
-                         "ttl": "ttl"
-                     }
-                 ]
-                 },
-
-                {"name": "kaka3",
-                 "id": 7,
-                 "sub_responses": [
-                     {
-                         "id": 0,
-                         "name": "kaka111",
-                         "jsonld": json.dumps({"oi": "oioioi", "number": 123, "lista": ["as", "asd", "sds"]}),
-                         "ttl": "ttl"
-                     }
-                 ]
-                 },
-
-                {"name": "kaka2",
-                 "id": 8,
-                 "sub_responses": [
-                     {
-                         "id": 0,
-                         "name": "kaka111",
-                         "jsonld": json.dumps({"oi": "oioioi", "number": 123, "lista": ["as", "asd", "sds"]}),
-                         "ttl": "ttl"
-                     }
-                 ]
-                 },
-
-                {"name": "kaka3",
-                 "id": 9,
-                 "sub_responses": [
-                     {
-                         "id": 0,
-                         "name": "kaka111",
-                         "jsonld": json.dumps({"oi": "oioioi", "number": 123, "lista": ["as", "asd", "sds"]}),
-                         "ttl": "ttl"
-                     }
-                 ]
-                 },
-
-                {"name": "kaka2",
-                 "id": 10,
-                 "sub_responses": [
-                     {
-                         "id": 0,
-                         "name": "kaka111",
-                         "jsonld": json.dumps({"oi": "oioioi", "number": 123, "lista": ["as", "asd", "sds"]}),
-                         "ttl": "ttl"
-                     }
-                 ]
-                 },
-
-                {"name": "kaka3",
-                 "id": 11,
-                 "sub_responses": [
-                     {
-                         "id": 0,
-                         "name": "kaka111",
-                         "jsonld": json.dumps({"oi": "oioioi", "number": 123, "lista": ["as", "asd", "sds"]}),
-                         "ttl": "ttl"
-                     }
-                 ]
-                 },
-
-                {"name": "kaka2",
-                 "id": 12,
-                 "sub_responses": [
-                     {
-                         "id": 0,
-                         "name": "kaka111",
-                         "jsonld": json.dumps({"oi": "oioioi", "number": 123, "lista": ["as", "asd", "sds"]}),
-                         "ttl": "ttl"
-                     }
-                 ]
-                 },
-
-                {"name": "kaka3",
-                 "id": 12,
-                 "sub_responses": [
-                     {
-                         "id": 0,
-                         "name": "kaka111",
-                         "jsonld": json.dumps({"oi": "oioioi", "number": 123, "lista": ["as", "asd", "sds"]}),
-                         "ttl": "ttl"
-                     }
-                 ]
-                 },
-
-
-            ]
-
+            # Itere sobre as linhas do modelo fieldMapping
+            for fieldMapping_row in field_mapping:
+                a={
+                    "name": fieldMapping_row.name,
+                    "id": fieldMapping_row.id,
+                    "sub_responses": []
+                }
+                
+                # Acesse as linhas relacionadas da tabela mappedApi usando a relação 'field_mapping'
+                mappedApi_items = fieldMapping_row.field_mapping.all()
+                if mappedApi_items:
+                    for mappedApi_row in mappedApi_items:
+                        a["sub_responses"].append({
+                            "id": mappedApi_row.id,
+                            "name": mappedApi_row.name,
+                            "jsonld": mappedApi_row.dcat_jsonld,
+                            "ttl": mappedApi_row.dcat_ttl
+                        })
+                    
+                    response_list.append(a)
+   
             # return render(request, 'addFields.html', context)
             return render(request, 'mappedAPI.html', {'response_list': response_list})

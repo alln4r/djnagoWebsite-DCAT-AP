@@ -1,4 +1,4 @@
-#!c:\users\arbaouio\documents\meic\tfc\projeto limpo\mappingsystem\myenv\scripts\python.exe
+#!c:\users\othmane\documents\meic\tfc\projeto limpo\mappingsystem\myenv\scripts\python.exe
 # When the django-admin.py deprecation ends, remove this script.
 import warnings
 

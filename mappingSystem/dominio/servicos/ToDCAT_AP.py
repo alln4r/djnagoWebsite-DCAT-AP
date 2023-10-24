@@ -77,11 +77,11 @@ class ToDCAT_AP():
     def serialize_to_jsonld(self, graph, file_path):
         # Create a JSON-LD context object
         jsonld_context = {
-            "@context": {
+            #"@context": {
                 "dcat": "http://www.w3.org/ns/dcat#",
                 "dcterms": "http://purl.org/dc/terms/",
                 "foaf": "http://xmlns.com/foaf/0.1/"
-            }
+            #}
         }
 
         # Serialize the graph to JSON-LD

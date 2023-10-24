@@ -18,6 +18,7 @@ class apiUrlForm(forms.Form):
 
         url = cleaned_data.get('url')
         urlMetaData = cleaned_data.get('urlMetaData')
+        
 
         headers = {}
         headersMeta = {}
@@ -50,6 +51,7 @@ class apiUrlForm(forms.Form):
         cleaned_data["keyHeaderData"] = headers.values()
         cleaned_data["keyHeaderMeta"] = headersMeta.values()
         cleaned_data["flexRadioDefault"] = self.data.get("flexRadioDefault")
+
     # def clean_url(self):
 
         regex = r'https?://(?:[-\w.]|(?:%[\da-fA-F]{2}))+'
@@ -110,4 +112,4 @@ class apiUrlForm(forms.Form):
         if not self.is_valid():
             return cleaned_data
 
-        return {"responseAPI": response_API.json(), "response_metaData": response_metaData.json(), "response_fiwareModel": response_fiwareModel, "formData": formData}
+        return {"responseAPI": response_API.json(), "response_metaData": response_metaData.json(), "response_fiwareModel": response_fiwareModel, "formData": formData, "url":url, "urlMetaData":urlMetaData }

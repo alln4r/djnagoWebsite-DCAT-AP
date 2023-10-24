@@ -1,3 +1,4 @@
 # Everything the developer needs in addition to the production requirements
 # comando a executar: pip install -r requirements/dev.txt
+# pip freeze > requirements.txt
 -r prod.txt
