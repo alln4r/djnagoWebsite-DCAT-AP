@@ -350,6 +350,7 @@ function deleteField(responseId, subResponseId) {
     };
 
     let id_remove = `sub-collapse-${responseId}-${subResponseId}`;
+    let divParent_toRemove = `collapse-${responseId}`;
     
     // Realize uma solicitação AJAX para enviar os dados ao servidor
     $.ajax({
@@ -362,6 +363,11 @@ function deleteField(responseId, subResponseId) {
             console.log('Sucesso:', data);
             // Feche o modal
             document.getElementById(id_remove).parentElement.remove();
+            
+            divParent=document.getElementById(divParent_toRemove)
+            if (divParent.children.length==0){
+                divParent.parentElement.remove();
+            }
             // Exibir uma mensagem de sucesso para o user
             showAndHideAlert(data.message, 'success','.messageHideSHow');
 

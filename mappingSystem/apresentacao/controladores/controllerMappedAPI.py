@@ -49,23 +49,24 @@ def mappedAPI_view(request):
                         
                         # Check if the field_id is unique in MappedApi
                         field_id_count = MappedApi.objects.filter(fieldMappingID=mapped_api.fieldMappingID).count()
+                        print(mapped_api.fieldMappingID)
                         
                         if field_id_count == 1:
                             # If the field_id is unique, delete the corresponding OtherTable record
-                            FieldMapping.objects.get(id=mapped_api.fieldMappingID).delete()
+                            FieldMapping.objects.get(id=mapped_api.fieldMappingID_id).delete()
                         else:
                             # Delete the MappedApi record
                             mapped_api.delete()
                         
                         return JsonResponse({'message': "Record deleted successfully."})
-
+                
                 except MappedApi.DoesNotExist:
                     return JsonResponse({'message': "Record not found. It couldn't be deleted."}, status=400)
                 except FieldMapping.DoesNotExist:
                     return JsonResponse({'message': "Record not found."}, status=400)
                 except Exception as e:
                     return JsonResponse({'message': f"An error occurred: {str(e)}"}, status=500)
-
+                
             
                     
             if type=="TO_EDIT_MAP":
