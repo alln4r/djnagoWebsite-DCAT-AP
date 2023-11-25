@@ -10,41 +10,43 @@ class apiUrlForm(forms.Form):
     urlMetaData = forms.CharField(required=True, label="urlMetaData", widget=forms.TextInput(
         attrs={"placeholder": "METADATA API URL..", "class": "form-control"}))
 
-    # print("dentro do frommmm")
 
     def clean(self):
-
+       
         cleaned_data = super().clean()
 
         url = cleaned_data.get('url')
         urlMetaData = cleaned_data.get('urlMetaData')
+       
+
+        if self.data.get("TO_Edit") != True:
+            headers = {}
+            headersMeta = {}
+
+            # Adiciona cada cabeçalho no dicionário headers={}
+            for key, value in self.data.items():
+                if key.startswith('keyHeaderData'):
+                    # Obtém o valor do input valueHeaderData correspondente
+                    value_key = 'valueHeaderData{}'.format(key.split('Data')[1])
+                    header_key = self.data.get(key)
+                    header_value = self.data.get(value_key)
+                    # Adiciona a chave-valor no dicionário headers={}
+                    headers.setdefault(header_key, header_value)
+
+                if key.startswith('keyHeaderMeta'):
+                    # Obtém o valor do input valueHeaderData correspondente
+                    value_keyMeta = 'valueHeaderMeta{}'.format(
+                        key.split('Meta')[1])
+                    header_keyMeta = self.data.get(key)
+                    header_valueMeta = self.data.get(value_keyMeta)
+                    # Adiciona a chave-valor no dicionário headers={}
+                    headersMeta.setdefault(header_keyMeta, header_valueMeta)
+        else:
+            headers = json.loads(self.data.get('headers'))
+            headersMeta = json.loads(self.data.get('headersMeta'))
+            
+
         
-
-        headers = {}
-        headersMeta = {}
-
-        # Adiciona cada cabeçalho no dicionário headers={}
-        for key, value in self.data.items():
-            if key.startswith('keyHeaderData'):
-                # Obtém o valor do input valueHeaderData correspondente
-                value_key = 'valueHeaderData{}'.format(key.split('Data')[1])
-                header_key = self.data.get(key)
-                header_value = self.data.get(value_key)
-                # Adiciona a chave-valor no dicionário headers={}
-                headers.setdefault(header_key, header_value)
-
-            if key.startswith('keyHeaderMeta'):
-                # Obtém o valor do input valueHeaderData correspondente
-                value_keyMeta = 'valueHeaderMeta{}'.format(
-                    key.split('Meta')[1])
-                header_keyMeta = self.data.get(key)
-                header_valueMeta = self.data.get(value_keyMeta)
-                # Adiciona a chave-valor no dicionário headers={}
-                headersMeta.setdefault(header_keyMeta, header_valueMeta)
-
-        print(headers)
-        print("-------------------")
-
         formData = {"keyHeaderData": headers, "keyHeaderMeta": headersMeta,
                     "flexRadioDefault": self.data.get("flexRadioDefault")}
         formData = json.dumps(formData)
@@ -72,17 +74,30 @@ class apiUrlForm(forms.Form):
             # headers = {'Authorization' : 'Bearer {access_token}'}
             # headers = {'Ocp-Apim-Subscription-Key': 'ac533345bca44ec6a811cf5c1721850f' }
             response_API = requests.get(url, headers=headers)
-        except:
+            
+            if not (response_API.json() and (isinstance(response_API.json(), list) or isinstance(response_API.json(), dict))):
+                raise forms.ValidationError(
+                    {"url": "The API returned an unexpected or empty structure."})
+        except requests.exceptions.RequestException:
             raise forms.ValidationError(
-                'url', 'Could not connect to the given URL')
-
+                {"url": "Could not connect to the given URL"})
+        except ValueError:
+            raise forms.ValidationError(
+                {"url": "The API did not return valid JSON data."})
+        
         try:
             # headersMeta = {'Ocp-Apim-Subscription-Key': 'ac533345bca44ec6a811cf5c1721850f'}
             response_metaData = requests.get(urlMetaData, headers=headersMeta)
-        except:
+            if not (response_metaData.json() and (isinstance(response_metaData.json(), list) or isinstance(response_metaData.json(), dict))):
+                raise forms.ValidationError({
+                    "urlMetaData": "The API returned an unexpected or empty structure."})
+        except requests.exceptions.RequestException:
             raise forms.ValidationError(
                 {"urlMetaData": "Could not connect to the given URL"})
-
+        except ValueError:
+            raise forms.ValidationError(
+                {"urlMetaData": "The API did not return valid JSON data."})
+        
         if response_API.status_code != 200:
             raise forms.ValidationError({"url": "Code Error: "+str(response_API.status_code)+" » "+response_API.reason +
                                         ' (Please check the provided headers and ensure they have the necessary permissions.)'})
@@ -90,7 +105,7 @@ class apiUrlForm(forms.Form):
         if response_metaData.status_code != 200:
             raise forms.ValidationError({"urlMetaData": "Code Error: "+response_metaData.status_code+" » "+response_metaData.reason + +
                                         ' (Please check the provided headers and ensure they have the necessary permissions.)'})
-
+        
         try:
             fiwareModelUrl = None
             if self.data.get("flexRadioDefault") == "AirQuality":

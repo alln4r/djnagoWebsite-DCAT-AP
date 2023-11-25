@@ -10,11 +10,14 @@ def add_field_view(request):
     if not request.user.is_authenticated:
         return redirect('login')
     else:
-        if request.method == 'POST':
-            form = MyForm(request.POST)
-
+        if request.method == 'POST' and request.is_ajax():
+            print(request.POST)
             metaD = {}
             for key, value in request.POST.items():
+                if not value:
+                    return JsonResponse({'message': 'All fields must have a defined value.'}, status=400)
+            for key, value in request.POST.items():
+               
                 if key.startswith('namespace_'):
                     namespace = value
                     term = request.POST.get(f'term_{key.split("_")[1]}')
@@ -41,7 +44,7 @@ def add_field_view(request):
                         "parent": parent
                     }
 
-            return JsonResponse({'metaD': metaD})
+            return JsonResponse({'message': 'Field/s created successfully!'})
 
         elif request.method == 'GET' and request.is_ajax():
             namespace = request.GET.get('namespace')
@@ -50,8 +53,6 @@ def add_field_view(request):
             return JsonResponse({'terms': term_list})
 
         else:
-            print("estou aqui")
-
             # Converter o dicionário de namespaces em uma lista de tuplas (value, label)
 
             form = MyForm()

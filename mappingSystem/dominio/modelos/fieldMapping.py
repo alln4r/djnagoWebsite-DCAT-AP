@@ -1,18 +1,16 @@
 from django.db import models
 from django.contrib.auth.models import User
-from .customField import CustomField
+
 
 
 class FieldMapping(models.Model):
     name = models.CharField(max_length=400, null=False)
-    my_json_object = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     data_api_link = models.URLField()
     metadata_api_link = models.URLField()
     data_api_header = models.TextField()
-    metadata_api_header = models.TextField()
-    custom_fields = models.ManyToManyField(CustomField) 
+    metadata_api_header = models.TextField()     
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     '''
     def save(self, *args, **kwargs):

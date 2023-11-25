@@ -1,12 +1,17 @@
 from django.db import models
 from .fieldMapping import FieldMapping
+from .customField import CustomField
 
 
 class MappedApi(models.Model):    
-    name = models.CharField(max_length=400, null=False)
+    name = models.CharField(max_length=400, null=False)    
+    my_json_object = models.TextField()
     dcat_ttl = models.TextField()
     dcat_jsonld = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
     fieldMappingID = models.ForeignKey(FieldMapping, related_name='field_mapping', on_delete=models.CASCADE)
+    custom_fields = models.ManyToManyField(CustomField)
 
     def save(self, *args, **kwargs):
         if not self.name:

@@ -36,6 +36,26 @@
     .formatted-code {
         white-space: pre-wrap;
     }
+
+    .loading-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+        display: none;
+        z-index: 9999;
+    }
+
+    .loading-content {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        color: #fff;
+    }
+
 </style>
 
 <div class="container">
@@ -54,7 +74,7 @@
                     <div class="card field-group mb-3 {% cycle 'bg-pastel-info' 'bg-pastel-light' as sub_cycle_color silent %}">
                         <div class="card-header d-flex justify-content-between align-items-center {% if sub_cycle_color == 'bg-pastel-info' %}bg-pastel-info{% elif sub_cycle_color == 'bg-pastel-light' %}bg-pastel-light{% endif %}">
                             <h5 class="card-title">{{ sub_response.name|escape }}</h5>
-                            <button class="btn btn-link toggle-details" type="button" data-toggle="collapse" data-target="#sub-collapse-{{ response.id }}-{{ sub_response.id }}"><i class="fa fa-chevron-down"></i></button>
+                            <button class="btn btn-link toggle-details" type="button" data-toggle="collapse" data-target="#sub-collapse-{{ response.id }}-{{ sub_response.id }}"><i class="{% if forloop.parentloop.first and forloop.first %}fa fa-chevron-up{% else %}fa fa-chevron-down {% endif %}"></i></button>
                         </div>
                         <div class="card-body collapse {% if forloop.parentloop.first and forloop.first %}show{% endif %}" id="sub-collapse-{{ response.id }}-{{ sub_response.id }}">
                             <div class="row">
@@ -131,7 +151,13 @@
     </div>
 </div>
 
-
+<div class="loading-overlay">
+    <div class="loading-content">
+      <div class="spinner-border text-danger" role="status" style="width: 7rem; height: 7rem;">
+        <span class="visually-hidden">Loading...</span>
+      </div>
+    </div>
+  </div>
     
 
 
@@ -169,7 +195,6 @@ function submitToCKAN() {
         data: formData,
         success: function (data, status) {
             // Lógica para tratamento de sucesso
-            console.log('Sucesso:', data);
             // Feche o modal
             $('#ckanModal').modal('hide');
             // Exibir uma mensagem de sucesso para o user
@@ -180,13 +205,12 @@ function submitToCKAN() {
         error: function (error) {
             if (error && error.responseJSON && error.responseJSON.message) {
                 // Se a resposta de erro contém a propriedade "message"
-                console.error('Erro:', error.responseJSON.message);
-                console.log(error.responseJSON.message)
+                
                 // Exibir uma mensagem de erro para o usuário
                 showAndHideAlert(error.responseJSON.message, 'danger','.modal-body');
             } else {
                 // Se não houver uma mensagem de erro específica na resposta
-                console.error('Unknown error.');
+                
                 // Exibir uma mensagem de erro para o usuário
                 showAndHideAlert('Error: An error occurred while submitting your data.', 'danger','.modal-body');
             }
@@ -305,7 +329,8 @@ function updateCode(responseId, subResponseId, contentType) {
 }
 
 function editField(responseId, subResponseId) {
-    
+    var loadingOverlay = document.querySelector('.loading-overlay');
+    loadingOverlay.style.display = 'block';
     // Crie um objeto de dados com os valores do formulário
     const formData = {
         csrfmiddlewaretoken: '{{ csrf_token }}',
@@ -314,29 +339,25 @@ function editField(responseId, subResponseId) {
         type:"TO_EDIT_MAP"
     };
 
-    // Realize uma solicitação AJAX para enviar os dados ao servidor
-    $.ajax({
-        url: 'mappedAPI',
-        type: 'POST',
-        dataType: "json",
-        data: formData,
-        success: function (data, status) {
-            // Lógica para tratamento de sucesso
-            console.log('Sucesso:', data);
 
-            // Exibir uma mensagem de sucesso para o usuário
-            showAndHideAlert('Sucesso: Seus dados foram enviados com sucesso!', 'success','.alert-container');
+    var form = document.createElement('form');
+    form.method = 'POST';
+    form.action = '/mappedAPI';
 
-        },
-        error: function (error) {
-            // Lógica para tratamento de erro
-            console.error('Erro:', error);
-
-            // Exibir uma mensagem de erro para o usuário
-            showAndHideAlert('Erro: Ocorreu um erro ao enviar seus dados.', 'danger','.alert-container');
+    for (var key in formData) {
+        if (formData.hasOwnProperty(key)) {
+            var input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = key;
+            input.value = formData[key];
+            form.appendChild(input);
         }
-    });
+    }
 
+    // Adicionar formulário à página e enviá-lo
+    document.body.appendChild(form);
+    form.submit();
+    
 }
 
 function deleteField(responseId, subResponseId) {
@@ -359,9 +380,7 @@ function deleteField(responseId, subResponseId) {
         dataType: "json",
         data: formData,
         success: function (data, status) {
-            // Lógica para tratamento de sucesso
-            console.log('Sucesso:', data);
-            // Feche o modal
+            
             document.getElementById(id_remove).parentElement.remove();
             
             divParent=document.getElementById(divParent_toRemove)
@@ -374,16 +393,11 @@ function deleteField(responseId, subResponseId) {
         },
         error: function (error) {
             if (error && error.responseJSON && error.responseJSON.message) {
-                // Se a resposta de erro contém a propriedade "message"
-                console.error('Erro:', error.responseJSON.message);
-                console.log(error.responseJSON.message)                
                 
                 // Exibir uma mensagem de erro para o usuário
                 showAndHideAlert(error.responseJSON.message, 'danger','.modal-body');
             } else {
-                // Se não houver uma mensagem de erro específica na resposta
-                console.error('Unknown error.');
-                // Exibir uma mensagem de erro para o usuário
+                
                 showAndHideAlert('Error: An error occurred while submitting your data.', 'danger','.modal-body');
             }
 

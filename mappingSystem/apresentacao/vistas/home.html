@@ -120,7 +120,7 @@
   <div class="my-3 p-3 bg-grey border-dark border border-dark  rounded box-shadow">
 
     <p>Get Data From API URL</p>
-
+    
     <div class="row justify-content-center">
       <div class="col-lg-8">
         <div class="step-progress">
@@ -256,7 +256,7 @@
 
   <div class="root"></div>
       
-        
+    
 
 
 
@@ -458,10 +458,16 @@ document.addEventListener('DOMContentLoaded', function() {
       //---------------------------------------------FIM-----------------------------------------------------------------
 
     
+ 
       var formData = "{{ formData | escapejs}}";
-      formData =JSON.parse(formData);
-      console.log(formData)
-      let keys = Object.keys(formData);
+      let keys = []
+      if (formData.trim() !== '') {
+        formData =JSON.parse(formData);
+        
+      }else{
+        keys = Object.keys(formData);
+      }        
+      
       if (keys.length!=0){
 
            
@@ -506,7 +512,7 @@ document.addEventListener('DOMContentLoaded', function() {
           let apiModelFields="{{apiModelFields | escapejs}}"
           
           apiModelFields =JSON.parse(apiModelFields);
-        
+          
           if (apiModelFields=="None" || apiModelFields.length==0){
                   return
           }
@@ -515,14 +521,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
           let existingLinks="{{existingLinks | escapejs}}"
           existingLinks =JSON.parse(existingLinks);
-          console.log(existingLinks)
-
+          
           let intermediateModelFields="{{intermediateModelFields | escapejs}}"
           intermediateModelFields =JSON.parse(intermediateModelFields);
    
-
-
-
+          var edit_sub_id = "{{ edit_sub_id | default:'NOT_TO_EDIT' | escapejs}}";
+          
           //let inputMdl="{{inputMdl | escapejs}}"
         
           //inputMdl =JSON.parse(inputMdl);
@@ -561,7 +565,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 "existingLinks" : existingLinks //[{"from":"id","to":"nome"}]
           };
 
-      console.log(input)
+   
 
           $("#container").show();			
 		  	  fieldLinks=$("#bonds").fieldsLinker("init",input);
@@ -571,9 +575,9 @@ document.addEventListener('DOMContentLoaded', function() {
           
           
           let fieldNames="{{fieldNames | escapejs}}"
-          console.log(fieldNames)
+          
           fieldNames =JSON.parse(fieldNames);
-          console.log(fieldNames)
+          
 
           for (let i = 0; i < fieldNames.length; i++) {
             $('#multiselect').append(`<option value="${fieldNames[i]['id']}">${fieldNames[i]['fieldName']}</option>`);
@@ -587,6 +591,24 @@ document.addEventListener('DOMContentLoaded', function() {
           
           $("#showDeials").show();
           loadingOverlay.style.display = 'none';
+
+          var DefValueLinks = JSON.parse( "{{ DefValueLinks | default:'[]' | escapejs}}" );
+        
+          if (edit_sub_id != 'NOT_TO_EDIT' &&  DefValueLinks.length > 0){ //definir os valores default dos campos que tinham sido defidos manualmente pelo user
+
+            DefValueLinks.forEach(item => {
+              let dataName = Object.keys(item)[0];
+              let valor = item[dataName];
+              let liElement = document.querySelector(`.FL-right li[data-name='${dataName}']`);
+
+              if (liElement) {
+                liElement.setAttribute("data-val", valor);
+                liElement.querySelector('i').style.color='#5EBA7D'
+              } 
+            });
+            
+
+          }
          
 
           $("#addFieldToSchema").on("click",function(){
@@ -597,16 +619,14 @@ document.addEventListener('DOMContentLoaded', function() {
             if (id_list_selected.length ==0){
               return
             }
-            console.log(id_list_selected)
-        
-            //console.log(results['linksOrder'][0]['from'])
+            
             
             if(results['error']==false){
 
         
               $.ajax({
                       type: "GET",
-                      //url: "home",
+                      url: "/",
                       dataType: "json",
                       //contentType: 'application/json; charset=utf-8',
                       data: {
@@ -615,19 +635,18 @@ document.addEventListener('DOMContentLoaded', function() {
                         links: JSON.stringify(results['links'])
                       },
                       success: function (data, status) {
-                        console.log( data ) //$.parseJSON(data)
-                        console.log(status)
-                        alert("Data: " + data + "\nStatus: " + status);
+                      
                         input['listA']['list']=data["apiModelFields"]
                         input['listB']['list']=data["intermediateModelFields"]
                         input['existingLinks']=data["existingLinks"]
                         fieldLinks=$("#bonds").fieldsLinker("init",input);
+                        $(".FL-right ul li").append('<i class="fa fa-pencil" style="right: 8px; color: rgb(170, 170, 170); position: absolute;"> </i>');
                       
                       }
               });
 
             }
-            $("#output").html("output => " + JSON.stringify(results));
+            //$("#output").html("output => " + JSON.stringify(results));
             
           });
 
@@ -635,7 +654,7 @@ document.addEventListener('DOMContentLoaded', function() {
           $(".fieldLinkerSave").on("click",function(){
             var results = fieldLinks.fieldsLinker("getLinks");
         
-            console.log(results['linksOrder'][0]['from'])
+           
 
             if(results['error']==false){
 
@@ -644,28 +663,56 @@ document.addEventListener('DOMContentLoaded', function() {
                 results['links'][i]['path']=vkApiData[ results['linksOrder'][i]['from'] ];
             
               }
+
+              var flRightDiv = document.querySelector('.FL-right');
+              var liList = flRightDiv.querySelectorAll('li');
+              var linksByDefValue = [];
+
+              for (var li of liList) {
+                var dataName = li.getAttribute('data-name');
+                var dataVal = li.getAttribute('data-val');
+
+                if (dataName && dataVal) {
+                  linksByDefValue.push({ [dataName] : dataVal });
+                }
+              }
               
-              alert($("input[name='flexRadioDefault']:checked").val())
+              delete results.linksOrder
+              
+        
               results["flexRadioDefault"] = $("input[name='flexRadioDefault']:checked").val();
+              results["linksByDefValue"] = linksByDefValue;
+
+              //$("#output").html("output => " + JSON.stringify(results));
+              
               $.ajax({
                       type: "POST",
-                      //url: "home",
+                      url: "/",
                       dataType: "json",
                       //contentType: 'application/json; charset=utf-8',
                       data: {
                         csrfmiddlewaretoken: '{{ csrf_token }}',
-                        'links': JSON.stringify(results)
+                        'links': JSON.stringify(results),
+                        'edit_sub_id': edit_sub_id
                       },
                       success: function (data, status) {
-                        console.log( data ) //$.parseJSON(data)
-                        console.log(status)
-                        alert("Data: " + data + "\nStatus: " + status);
-                      
+                        //console.log( data ) //$.parseJSON(data)
+                        //console.log(status)
+                        //alert("Data: " + data + "\nStatus: " + status);
+                        var currentUrl = window.location.href;
+                        if (currentUrl.match(/[^\/]\/[^\/]*\/?$/)) {
+                            // Remover a última parte
+                          var newUrl = currentUrl.substring(0, currentUrl.lastIndexOf('/'))
+                        }
+
+                        // Redirect to the new URL
+                        window.location.href = newUrl + '/mappedAPI';
+                                              
                       }
               });
 
             }
-            $("#output").html("output => " + JSON.stringify(results));
+            
 
           });
 
@@ -679,39 +726,47 @@ document.addEventListener('DOMContentLoaded', function() {
 
           let liClicked=null
           $(document).on('click','.FL-right ul li i', function(e){
+            
+            let dataVal = $(this).parent().data('val');
 
             
-            $("#container").append( '<!-- The Modal -->'+
-            '<div class="modal" id="myModal">'+
-                  '<div class="modal-dialog">'+
-                    '<div class="modal-content">'+
+            // Se o atributo data-val não estiver definido, defina um valor padrão
+            if (typeof dataVal === 'undefined') {
+                dataVal = '';
+            }
+           
+            
+            if ($("#myModal").length == 0) {
+              $("#container").append( '<!-- The Modal -->'+
+              '<div class="modal" id="myModal">'+
+                    '<div class="modal-dialog">'+
+                      '<div class="modal-content">'+
+                      
                     
-                      '<!-- Modal Header -->'+
-                      '<div class="modal-header">'+
-                        '<h5 class="modal-title">header</h5>'+
-                        '<button type="button" class="btn-close" data-bs-dismiss="modal"></button>'+
-                        '</div>'+
-                
-                      '<!-- Modal body -->'+
-                      '<div class="modal-body">'+
-                        
-                        '<form>'+
-                            '<div class="mb-3">'+
-                              '<label for="Value" class="col-form-label">Value:</label>'+
-                                '<input type="text" class="form-control" id="value" />'+
-                                ' </div>'+                
-                            '</form>'+
+                  
+                        '<!-- Modal body -->'+
+                        '<div class="modal-body">'+
+                          
+                          '<form>'+
+                              '<div class="mb-3">'+
+                                '<label for="Value" class="col-form-label">Value:</label>'+
+                                  '<input type="text" class="form-control" id="value"/>'+
+                                  ' </div>'+                
+                              '</form>'+
 
+                            '</div>'+
+                  
+                        '<!-- Modal footer -->'+
+                        '<div class="modal-footer">'+
+                          '<button type="button" class="btn btn-danger" data-bs-dismiss="modal">Close</button>'+
                           '</div>'+
+                  
+                      '</div>'+
+                  '</div>')
+                }
+                input = $('#myModal').find("#value");
+                input.val(dataVal)
                 
-                      '<!-- Modal footer -->'+
-                      '<div class="modal-footer">'+
-                        '<button type="button" class="btn btn-danger" data-bs-dismiss="modal">Close</button>'+
-                        '</div>'+
-                
-                    '</div>'+
-                '</div>')
-
                       
 
                 liClicked=$(this)
@@ -719,22 +774,18 @@ document.addEventListener('DOMContentLoaded', function() {
      
       
             });
-
-            $(document).on('hidden.bs.modal','#myModal', function(e){
+ $(document).on('hidden.bs.modal','#myModal', function(e){
             //$("#myModal").on("hidden.bs.modal", function () {
-              console.log("Aquiii")
-              console.log( $("#value").val() )
+             
               liClicked.parent().attr( "data-val", $("#value").val() )
 
-              console.log(liClicked.parent().data('val'))
               if( $("#value").val().length !==0 ){
                 liClicked.css('color', '#5EBA7D');
-                console.log("trueeeeee")
+         
               }else{ 
                 liClicked.parent().removeData('val');
                 liClicked.parent().removeAttr("data-val");
                 liClicked.css('color', '#aaaaaa');
-                console.log("false")
                 
               }
             

@@ -1,3 +1,4 @@
+from django.db import transaction
 from django.shortcuts import render, redirect
 from django.http import JsonResponse, HttpResponse
 
@@ -9,14 +10,12 @@ from ...dominio.modelos.mappedApi import MappedApi
 
 from ...dominio.servicos.tratarJson_Impl import TratarJson
 from ...dominio.servicos.mapIntermediateModel_Impl import MapIntermediateModel
-#from ...dominio.servicos.MapJsonToDCATFiles import MapJsonToDCATFiles
 from ...dominio.servicos.toDCAT_AP import ToDCAT_AP
 import json
 import os
 
 def home(request):
     if not request.user.is_authenticated:
-        print("_____________________nÃO eSTÁ LOGADO_______________________________________")
         return redirect('login')
         
     else:
@@ -45,9 +44,9 @@ def home(request):
                 intermediateModelFields = MapIntermediateModel().makeIntermediateModelFields(schemeFiwareModel,schemeMetaDataIntermediate)
                 
                 # Print the loaded data
-               
+
                 apiModelFields, vkApiData = TratarJson().fieldsToShowInGUI(apiData)
-               
+                
                 existingLinks = MapIntermediateModel().getMappedLinks(intermediateModelFields, schemeMetaDataIntermediate, apiMetaData, apiModelFields[0])
                 request.session['apiData'] = apiData
                 request.session['vkApiData'] = vkApiData
@@ -74,8 +73,6 @@ def home(request):
                 # Seleciona apenas a coluna 'fieldName'
                 fieldNames = json.dumps(list( customFields.values('fieldName','id') ))
 
-                print(fieldNames)
-
                 
                 return render(request,'home.html', {
                                                         'form': form, 
@@ -90,7 +87,7 @@ def home(request):
                 return render(request,'home.html', {'form': form})   
 
         if request.method == "POST" and request.is_ajax(): #save
-            print("ajaxxxxxxxx")
+           
             apiData = request.session.get('apiData')
             vlk= request.session.get('vkApiData') 
             intermediateModelFields = request.session.get('intermediateModelFields') 
@@ -98,8 +95,9 @@ def home(request):
             linksWithpath=json.loads( request.POST.get('links' ) )
             #print(APIdata)
            
-            modelData = MapIntermediateModel().getMappedData(linksWithpath['links'],vlk)
+            modelData = MapIntermediateModel().getMappedData(linksWithpath,vlk)
             #print(modelData) # é uma lista de objetos com os valores da api de dados com os campos do interior do sistema
+           
             '''for mdlData in modelData: 
                 intermediateModelData = MapIntermediateModel().getIntermediateModelData(mdlData, request.session.get('schemeMetaDataIntermediate'))
                 #jsonFile=ckanEXT.Extract().run()
@@ -108,60 +106,70 @@ def home(request):
                 dcatTTL, dcatJsonLD = ToDCAT_AP().run(intermediateModelData)
 
                 print(dcatJsonLD)'''
+            
             intermediateModelData = MapIntermediateModel().getIntermediateModelData(modelData[0], request.session.get('schemeMetaDataIntermediate'))
             dcatTTL, dcatJsonLD = ToDCAT_AP().run(intermediateModelData)
 
             #dar save dcatTTL, dcatJsonLD, request.POST.get('links' )
-           
-            print("_______________________")
-           
-            formData=json.loads(request.session.get('formData'))          
-            # Cria uma instância de FieldMapping
-            field_mapping = FieldMapping.objects.create(
-                user=request.user,
-                my_json_object = request.POST.get('links' ),
-                #created_at = models.DateTimeField(auto_now_add=True)
-                #updated_at = models.DateTimeField(auto_now=True)
-                data_api_link = request.session.get('url'),
-                metadata_api_link = request.session.get('urlMetaData'),
-                
-                data_api_header = formData['keyHeaderData'],
-                metadata_api_header = formData['keyHeaderMeta'],
-                #custom_fields = request.session.get('id_list_CustomFields')
-                #request.session.get('formData')['flexRadioDefault']
-                #mappedApiID = mapped_api #referencia com id
-            )
+            formData=json.loads(request.session.get('formData'))
 
-            #id_list_CustomFields =  request.session.get('id_list_CustomFields')
+            #_____________________________________________________
+            edit_sub_id = request.POST.get('edit_sub_id')
+
+            with transaction.atomic():
+                if edit_sub_id != "NOT_TO_EDIT":
+                    # Update  edit_x
+                    mapped_api = MappedApi.objects.get(id=edit_sub_id)
+                    field_mapping_ID=mapped_api.fieldMappingID_id
+
+                else:
+                #_____________________________________________________
+                        
+                    # Cria uma instância de FieldMapping
+                    field_mapping = FieldMapping.objects.create(
+                        user=request.user,                
+                        #created_at = models.DateTimeField(auto_now_add=True)
+                        #updated_at = models.DateTimeField(auto_now=True)
+                        data_api_link = request.session.get('url'),
+                        metadata_api_link = request.session.get('urlMetaData'),
+                        
+                        data_api_header = formData['keyHeaderData'],
+                        metadata_api_header = formData['keyHeaderMeta'],
+                        #custom_fields = request.session.get('id_list_CustomFields')
+                        #request.session.get('formData')['flexRadioDefault']
+                        #mappedApiID = mapped_api #referencia com id
+                    )
+
+                    #id_list_CustomFields =  request.session.get('id_list_CustomFields')
+
+                    # guardar na BD
+                    field_mapping.save()
+                    if not field_mapping.name:
+                        field_mapping.name = f"API_{field_mapping.id}"
             
-            print(intermediateModelFields)
-            print("____________-----------------_______________")
-            print(request.session.get('FieldsName'))
-           
-            if(request.session.get('FieldsName') is not None):
-                found_values = [item for item in request.session.get('FieldsName') if item in intermediateModelFields]
-                if found_values:
-                    custom_fields = CustomField.objects.filter(fieldName__in=found_values)
-                    field_mapping.custom_fields.set(custom_fields)
 
-            # guardar na BD
-            field_mapping.save()
-            if not field_mapping.name:
-                field_mapping.name = f"API_{field_mapping.id}"
-     
+                    # guardar o objeto novamente para persistir as alterações
+                    field_mapping.save()
 
-            # guardar o objeto novamente para persistir as alterações
-            field_mapping.save()
+                    field_mapping_ID=field_mapping.id
+                
+                mapped_api = MappedApi(
+                    #name = o name está a ser definido no modelo, é para ir a null
+                    my_json_object = request.POST.get('links' ),
+                    dcat_ttl = dcatTTL,
+                    dcat_jsonld = dcatJsonLD,
+                    fieldMappingID_id = field_mapping_ID
+                )
 
-            mapped_api = MappedApi(
-                #name = o name está a ser definido no modelo, é para ir a null
-                dcat_ttl = dcatTTL,
-                dcat_jsonld = dcatJsonLD,
-                fieldMappingID = field_mapping
-            )
+                mapped_api.save()
+                if(request.session.get('FieldsName') is not None):
+                    found_values = [item for item in request.session.get('FieldsName') if item in intermediateModelFields]
+                    if found_values:
+                        custom_fields = CustomField.objects.filter(fieldName__in=found_values)
+                        mapped_api.custom_fields.set(custom_fields)
 
-            mapped_api.save()
-
+                
+            
             return HttpResponse(  json.dumps( {'resp': "dentro ajaxxxxxxx", "apiData": apiData, "vkApiData": vlk, "inputMDL": intermediateModelFields } ) )
 
         

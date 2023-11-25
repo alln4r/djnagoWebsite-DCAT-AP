@@ -1,0 +1,63 @@
+{
+  "@context": {
+    "dcat": "http://www.w3.org/ns/dcat#",
+    "dcterms": "http://purl.org/dc/terms/",
+    "foaf": "http://xmlns.com/foaf/0.1/"
+  },
+  "@graph": [
+    {
+      "@id": "http://example.org/distribution/descrição-distribuição",
+      "@type": "dcat:Distribution",
+      "dcat:contentUrl": "https://services.arcgis.com/1dSrzEWVQn5kHHyK/ArcGIS/rest/services/Administracao_Publica/FeatureServer/0/query?where=1%3D1&outFields=*&f=pgeojson",
+      "dcat:description": "descrição distribuição",
+      "dcat:encodingFormat": "GeoJSON",
+      "dcat:license": "https://creativecommons.org/licenses/by-nc/4.0/"
+    },
+    {
+      "@id": "http://example.org/dataset/",
+      "@type": "dcat:Dataset",
+      "dcat:accessRights": "GrupA",
+      "dcat:contactPoint": "contacto",
+      "dcat:dateModified": "Novembro 12, 2022, 15:28 (Europe/Lisbon)",
+      "dcat:description": "descrição dataset",
+      "dcat:distribution": [
+        {
+          "@id": "http://example.org/distribution/descrição-distribuição"
+        },
+        {
+          "@id": "http://example.org/distribution/descriçao22"
+        }
+      ],
+      "dcat:keywords": [
+        "tagA",
+        "tagB",
+        "tagC"
+      ],
+      "dcat:publisher": "http://lisboaaberta.cm-lisboa.pt",
+      "dcat:sample": "https://geodados-cml.hub.arcgis.com/"
+    },
+    {
+      "@id": "http://example.org/catalog",
+      "@type": "dcat:Catalog",
+      "dcat:creator": "Othmane El Arbaoui",
+      "dcat:dataset": {
+        "@id": "http://example.org/dataset/"
+      },
+      "dcat:dateModified": "Novembro 12, 2022, 15:28 (Europe/Lisbon)",
+      "dcat:description": "descrição catalogo",
+      "dcat:language": "https://publications.europa.eu/resource/authority/language/POR",
+      "dcat:license": "CC BY-SA",
+      "dcat:name": "titulo Catalogo",
+      "dcat:publisher": "http://lisboaaberta.cm-lisboa.pt",
+      "dcat:title": ""
+    },
+    {
+      "@id": "http://example.org/distribution/descriçao22",
+      "@type": "dcat:Distribution",
+      "dcat:contentUrl": "https://www.teste.com",
+      "dcat:description": "descriçao22",
+      "dcat:encodingFormat": "json",
+      "dcat:license": "https://creativecommons.org/licenses/by-nc-nd/4.0/"
+    }
+  ]
+}

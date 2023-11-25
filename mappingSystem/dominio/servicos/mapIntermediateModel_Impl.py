@@ -37,6 +37,8 @@ class MapIntermediateModel(MapIntermediateModel_interface):
         existingLinks = []
         element = {}
 
+        print(intermediateModelFields)
+
         for i in intermediateModelFields:
 
             if i in schemeMetaDataIntermediate:
@@ -71,13 +73,19 @@ class MapIntermediateModel(MapIntermediateModel_interface):
         for item in vkApiData:
             new_item = {}
             for key, value in item.items():
-                for link_item in linksWithpath:
+                for link_item in linksWithpath['links']:
                     if key == link_item['from']:
                         new_item[link_item['to']] = value
                         break
 
             modelData.append(new_item)
+        
+        new_item = {}        
+        for item in linksWithpath['linksByDefValue']:
+            to, value = item.popitem()
+            new_item[to] = [value]
 
+        modelData[0].update(new_item)
         return modelData
 
     def getIntermediateModelData(self, json_data, schemeMetaDataIntermediate):

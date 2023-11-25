@@ -526,15 +526,16 @@
                     move.offsetB = -1;
                     move.nameB = -1;
                 });
-
+/*
                 $(document).on('hidden.bs.modal','#myModal', function(){
+                    console.log(liClicked)
                     if(typeof liClicked.parent().data('val') != 'undefined'){                        
                         indx=linksByName.push({ "DefValue": liClicked.parent().data('val'), "to": liClicked.parent().data('name') });
                         
                         linksByOrder.push({ "from": -indx, "to": -indx });
                     }
                 });
-              
+*/              
 
 
 //_______________________End Add by othmane 25/04/2022________________________________

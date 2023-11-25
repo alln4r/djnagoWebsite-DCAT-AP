@@ -4,11 +4,32 @@
 {% load static %}
 
 {% block content %}
+<style>
 
+.loading-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+        display: none;
+        z-index: 9999;
+    }
 
-<div class="container">
+  .loading-content {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      color: #fff;
+  }
+
+</style>
+<br>
+<div class="container alert-container" >
   <div class="container mb-3">
-    <form method="POST" action="{% url 'addFields' %}">
+    <form method="POST" id="myForm">
       {% csrf_token %}
       <div id="fields-container">
         <div class="form-text text-danger">
@@ -19,7 +40,7 @@
           {% endfor %}
         </div>
         <br>
-errors:
+
         {% if errors %}
   <ul>
     
@@ -62,13 +83,88 @@ errors:
       <br>
       <button id="add-field-btn" class="btn btn-info mb-3" type="button"><i class="fa fa-plus"></i> Add Field Group</button>
       <br>
-      <button type="submit" class="btn btn-primary">Submit</button>
+      <button type="button" id="submitBtn" class="btn btn-primary">Submit</button>
     </form>
   </div>
 </div>
 
+<div class="loading-overlay">
+  <div class="loading-content">
+    <div class="spinner-border text-danger" role="status" style="width: 7rem; height: 7rem;">
+      <span class="visually-hidden">Loading...</span>
+    </div>
+  </div>
+</div>
 <script>
   $(document).ready(function () {
+    
+    $("#submitBtn").on("click", function() {
+      //if(validateFieldNames()){
+        $("#myForm [name$='_temp0']").remove();
+      // Get form data
+      var formData = $("#myForm").serialize()
+
+    // Realize uma solicitação AJAX para enviar os dados ao servidor
+    $.ajax({
+        url: 'addFields',
+        type: 'POST',
+        dataType: "json",
+        data: formData,
+        success: function (data, status) {
+            // Lógica para tratamento de sucesso
+            console
+            // Exibir uma mensagem de sucesso para o usuário
+            showAndHideAlert(data.message, 'success','.alert-container');
+            setTimeout(function() {
+              window.location.reload();
+            }, 4010);
+
+        },
+        error: function (error) {
+            
+            // Exibir uma mensagem de erro para o usuário
+            
+            if (error && error.responseJSON && error.responseJSON.message) {
+                
+                // Exibir uma mensagem de erro para o usuário
+                showAndHideAlert(error.responseJSON.message, 'danger','.alert-container');
+            } else {
+                
+              showAndHideAlert('Error: An error occurred while submitting your data.', 'danger','.alert-container');
+            }
+        }
+    });
+  //}
+});
+
+function showAndHideAlert(message, alertType, alertContainer) {
+        const alertDiv = document.createElement('div');
+        alertDiv.classList.add('alert', `alert-${alertType}`, 'alert-dismissible', 'fade', 'show');
+        alertDiv.setAttribute('role', 'alert');
+        alertDiv.textContent = message;
+
+        const closeButton = document.createElement('button');
+        closeButton.classList.add('btn-close');
+        closeButton.setAttribute('type', 'button');
+        closeButton.setAttribute('data-bs-dismiss', 'alert');
+        closeButton.setAttribute('aria-label', 'Close');
+
+        alertDiv.appendChild(closeButton);
+
+        // Adiciona o alerta à página
+        alertContainer = document.querySelector(alertContainer) //'.alert-container');
+        //alertContainer.appendChild(alertDiv);
+        alertContainer.insertBefore(alertDiv, alertContainer.firstChild);
+        alertContainer.scrollIntoView({ behavior: 'smooth' });
+        // Fecha o alerta após 5 segundos (5000 milissegundos)
+        setTimeout(() => {
+            alertDiv.classList.remove('show');
+            alertDiv.addEventListener('transitionend', () => {
+                alertDiv.remove();
+            }, { once: true }); // Remove o evento de escuta após a transição de fading ser concluída
+        }, 4000);
+    }
+
   var fieldGroupIndex = 0;
   
   // Atualizar o grupo de campos do modelo
@@ -237,11 +333,11 @@ errors:
     var namespaceSelect = $(this);
     var termSelect = namespaceSelect.closest('.field-group').find('.term-select');
     var namespace = namespaceSelect.val();
-
+    var loadingOverlay = document.querySelector('.loading-overlay');
     // Mostrar o loader
     var loader = $('<div class="loader"><i class="fa fa-spinner fa-spin"></i></div>');
     termSelect.after(loader);
-
+    loadingOverlay.style.display = 'block';
     $.ajax({
       url: '/addFields',
       type: 'GET',
@@ -257,9 +353,12 @@ errors:
             termSelect.append(option);
           }
         });
+        
       },
       complete: function () {
         loader.remove();
+        setTimeout(() => { loadingOverlay.style.display = 'none';},3000);
+        
       }
     });
   });

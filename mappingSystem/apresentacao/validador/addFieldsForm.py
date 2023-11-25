@@ -33,7 +33,7 @@ class MyForm(forms.Form):
         # Execute as validações personalizadas
         # Inicialize o dicionário de erros com chaves vazias para todos os campos relevantes
         errors = {}
-
+        
         for key, value in self.data.items():
             if key.startswith('namespace_') and not value:
                 if key not in errors:
@@ -54,7 +54,8 @@ class MyForm(forms.Form):
                 if key not in errors:
                     errors[key] = []
                 errors.setdefault(key, []).append('Parent is required.')
-
+        if len(errors)>0:
+            self.is_valid==False
         return errors
 
     def get_terms(self, namespace, prefix=''):
