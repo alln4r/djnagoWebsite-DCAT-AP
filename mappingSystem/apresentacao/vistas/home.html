@@ -113,7 +113,7 @@
 
     <div class="text-center mt-5">
       <h1>Data Mapper</h1>
-      <p class="lead">Consiste em transformar os dados de output de uma API em dados conforme o DCAT-AP</p>
+      <p class="lead">Consists of transforming the output data from an API into data compliant with DCAT-AP.</p>
       <p>v0.1.3</p>
   </div>
 
@@ -269,6 +269,9 @@
     </div>
   </div>
 
+
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+
   <script src="{% static 'js/virtual-select.min.js' %}"></script>
   <script src="{% static 'js/fieldsLinker.js' %}"></script>
   <script>
@@ -294,6 +297,7 @@ document.addEventListener('DOMContentLoaded', function() {
   showStep(currentStep);
 
   btnNext.addEventListener('click', function() {
+    
     if (currentStep < steps.length - 1 && checkForm()) {
       currentStep++;
       showStep(currentStep);
@@ -461,12 +465,12 @@ document.addEventListener('DOMContentLoaded', function() {
  
       var formData = "{{ formData | escapejs}}";
       let keys = []
+      
       if (formData.trim() !== '') {
-        formData =JSON.parse(formData);
-        
-      }else{
-        keys = Object.keys(formData);
-      }        
+        formData =JSON.parse(formData); 
+        keys = Object.keys(formData);       
+      }
+      
       
       if (keys.length!=0){
 
@@ -557,10 +561,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 {
                   "name":"Available Fields",
                   "list" : intermediateModelFields, //inputMdl ,
-                  "mandatories" :[
-                  //	"nomeR",
-                  //	"titulo"
-                  ]
+                  "mandatories" : []//intermediateModelFields //["titleDataset"]
                 },
                 "existingLinks" : existingLinks //[{"from":"id","to":"nome"}]
           };
@@ -593,9 +594,10 @@ document.addEventListener('DOMContentLoaded', function() {
           loadingOverlay.style.display = 'none';
 
           var DefValueLinks = JSON.parse( "{{ DefValueLinks | default:'[]' | escapejs}}" );
-        
+   
+          
           if (edit_sub_id != 'NOT_TO_EDIT' &&  DefValueLinks.length > 0){ //definir os valores default dos campos que tinham sido defidos manualmente pelo user
-
+          
             DefValueLinks.forEach(item => {
               let dataName = Object.keys(item)[0];
               let valor = item[dataName];
@@ -645,6 +647,8 @@ document.addEventListener('DOMContentLoaded', function() {
                       }
               });
 
+            }else{
+              alert("Please map all required fields highlighted in red before proceeding.")
             }
             //$("#output").html("output => " + JSON.stringify(results));
             
@@ -711,6 +715,8 @@ document.addEventListener('DOMContentLoaded', function() {
                       }
               });
 
+            }else{
+              alert("Please map all required fields highlighted in red before proceeding.")
             }
             
 

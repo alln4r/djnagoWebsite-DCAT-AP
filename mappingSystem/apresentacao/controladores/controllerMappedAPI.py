@@ -72,36 +72,6 @@ def mappedAPI_view(request):
                 except Exception as e:
                     return JsonResponse({'message': f"An error occurred: {str(e)}"}, status=500)
                 
-            
-                    
-            if type=="TO_EDIT_MAP":
-
-                
-
-                '''response_data = {
-                    'html': render(request, 'home.html', {
-                                        'form': form, 
-                                        #'apiModelFields':json.dumps(apiModelFields[0]), 
-                                        #"vkApiData":json.dumps(vkApiData[0]), 
-                                        "existingLinks": existingLinks["links"], 
-                                        #"intermediateModelFields":intermediateModelFields, 
-                                        #"formData":formData, 
-                                        #"fieldNames":fieldNames
-                                    }).content.decode('utf-8')
-                }'''
-                request.META['HTTP_X_REQUESTED_WITH'] = 'XMLHttpRequest'
-                '''return redirect("/", {
-                                        'form': form, 
-                                        #'apiModelFields':json.dumps(apiModelFields[0]), 
-                                        #"vkApiData":json.dumps(vkApiData[0]), 
-                                        "existingLinks": existingLinks["links"], 
-                                        #"intermediateModelFields":intermediateModelFields, 
-                                        #"formData":formData, 
-                                        #"fieldNames":fieldNames
-                                    })'''
-                #return JsonResponse(response_data) 
-                #tenho que devolver algo assim
-                
         elif request.method == 'POST' and request.POST.get('type') =="TO_EDIT_MAP":
 
             # Get the MappedApi record to delete
@@ -179,7 +149,8 @@ def mappedAPI_view(request):
 
                 # Seleciona apenas a coluna 'fieldName'
                 fieldNames = json.dumps(list( customFields.values('fieldName','id') ))
-               
+
+                             
                 return render(request,'home.html', {
                                         'form': form, 
                                         'apiModelFields':json.dumps(apiModelFields[0]), 

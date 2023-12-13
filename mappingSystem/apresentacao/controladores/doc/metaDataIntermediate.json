@@ -41,8 +41,8 @@
   },
 
   "titleCatalog": {
-    "type": "https://schema.org/name",
-    "description": "Property. Model:'https://schema.org/name'. Titulo do Catalogo",
+    "type": "https://schema.org/title",
+    "description": "Property. Model:'https://schema.org/title'. Titulo do Catalogo",
     "parent": "Catalog"
   },
   "descriptionCatalog": {

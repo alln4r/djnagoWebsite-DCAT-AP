@@ -37,7 +37,6 @@ class MapIntermediateModel(MapIntermediateModel_interface):
         existingLinks = []
         element = {}
 
-        print(intermediateModelFields)
 
         for i in intermediateModelFields:
 

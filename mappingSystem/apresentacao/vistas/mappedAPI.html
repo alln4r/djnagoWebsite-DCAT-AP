@@ -284,7 +284,7 @@ document.addEventListener("DOMContentLoaded", function () {
     jsonCodes.forEach(function(code) {
         // Turtle
         const turtleContent = code.getAttribute('data-turtle');
-        const formattedTurtle = indentTurtle(turtleContent);
+        const formattedTurtle = turtleContent//indentTurtle(turtleContent);
         code.textContent = formattedTurtle;
         hljs.highlightElement(code);
 
@@ -320,7 +320,7 @@ function updateCode(responseId, subResponseId, contentType) {
         codeDiv.className = 'json formatted-code';
     } else if (contentType === 'ttl') {
         const turtleContent = codeDiv.getAttribute('data-turtle');
-        content = indentTurtle(turtleContent);
+        content = turtleContent//indentTurtle(turtleContent);
         codeDiv.className = 'turtle formatted-code';
     }
     
@@ -424,7 +424,7 @@ function downloadField(responseId, subResponseId) {
         } else if (contentType === 'turtle') {
             // Se o conteúdo atual for Turtle
             const turtleContent = codeDiv.getAttribute('data-turtle');
-            content = indentTurtle(turtleContent);
+            content = turtleContent//indentTurtle(turtleContent);
             fileName = `response_${responseId}_subresponse_${subResponseId}.ttl`;
             fileExtension = 'ttl';
         }

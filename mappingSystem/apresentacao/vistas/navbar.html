@@ -6,17 +6,17 @@
             <div class="collapse navbar-collapse" id="navbarSupportedContent">
                 <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
                    
-                    <li class="nav-item"><a class="nav-link {% if request.path == 'home' %}active{% endif %}" aria-current="page" href="{% url 'home' %}">Home</a></li>
+                    <li class="nav-item"><a class="nav-link {% if request.path == '/' %}active{% endif %}" aria-current="page" href="{% url 'home' %}">Home</a></li>
                 
-                    <li class="nav-item"><a class="nav-link {% if request.path == addFields %}active{% endif %}" href="{% url 'addFields' %}">Add Fiellds</a></li>
-                    <li class="nav-item"><a class="nav-link {% if request.path == 'mappedAPI' %}active{% endif %}" aria-current="page" href="{% url 'mappedAPI' %}">Mapped APIs</a></li>
+                    <li class="nav-item"><a class="nav-link {% if request.path == '/addFields' %}active{% endif %}" href="{% url 'addFields' %}">Add Fiellds</a></li>
+                    <li class="nav-item"><a class="nav-link {% if request.path == '/mappedAPI' %}active{% endif %}" aria-current="page" href="{% url 'mappedAPI' %}">Mapped APIs</a></li>
                     {% if user.is_authenticated %}
                         <li class="nav-item"><a class="nav-link" href="{% url 'logout' %}">Hi {{ user.username }}, Logout</a></li>
                     {% else %}
                     {% url 'login' as login_url %}
                         <li class="nav-item"><a class="nav-link {% if request.path == login_url %}active{% endif %}" href="{% url 'login' %}">Login</a></li>
                     {% endif %}
-                    <li class="nav-item dropdown">
+                    <!--<li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" id="navbarDropdown" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">Dropdown</a>
                         <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
                             <li><a class="dropdown-item" href="#">Action</a></li>
@@ -24,7 +24,7 @@
                             <li><hr class="dropdown-divider" /></li>
                             <li><a class="dropdown-item" href="#">Something else here</a></li>
                         </ul>
-                    </li>
+                    </li>-->
                 </ul>
             </div>
         </div>

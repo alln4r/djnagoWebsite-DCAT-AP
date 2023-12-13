@@ -11,7 +11,7 @@ def add_field_view(request):
         return redirect('login')
     else:
         if request.method == 'POST' and request.is_ajax():
-            print(request.POST)
+            
             metaD = {}
             for key, value in request.POST.items():
                 if not value:
